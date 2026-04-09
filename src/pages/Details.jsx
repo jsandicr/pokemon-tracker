@@ -77,8 +77,8 @@ const Details = () => {
   }
 
   return (
-    <Box sx={{ p: 3, pt: 4, maxWidth: '800px', margin: '0 auto', width: '100%' }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 1 }}>
+    <Box sx={{ p: 2, pt: 4, maxWidth: '800px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 1, flexWrap: 'wrap' }}>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <IconButton onClick={() => navigate(-1)} sx={{ mr: 2 }}>
             <ArrowBack />
@@ -88,11 +88,11 @@ const Details = () => {
           </Typography>
         </Box>
         <Box flexGrow={1} />
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Button variant="outlined" startIcon={<Edit />} color="secondary" onClick={() => navigate(`/edit/${tournament.id}`)}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Button variant="outlined" startIcon={<Edit />} color="secondary" onClick={() => navigate(`/edit/${tournament.id}`)} size="small">
             Modificar
           </Button>
-          <Button variant="outlined" color="error" onClick={handleDelete} sx={{ ml: 2 }}>
+          <Button variant="outlined" color="error" onClick={handleDelete} size="small">
             Eliminar
           </Button>
         </Box>
@@ -114,10 +114,10 @@ const Details = () => {
           <Divider sx={{ my: 3 }} />
 
           <Typography variant="h6" fontWeight="bold" mb={2}>Mi Deck</Typography>
-          <Box display="flex" gap={3}>
+          <Box display="flex" gap={2} flexWrap="wrap" justifyContent="flex-start">
             {tournament.deck.map((p, idx) => (
-              <Box key={idx} textAlign="center">
-                <Avatar src={p.image} sx={{ width: 80, height: 80, mb: 1, bgcolor: 'background.default' }} />
+              <Box key={idx} textAlign="center" sx={{ minWidth: '80px' }}>
+                <Avatar src={p.image} sx={{ width: 64, height: 64, mb: 1, bgcolor: 'background.default' }} />
                 <Typography variant="body2" fontWeight="bold">{p.name}</Typography>
               </Box>
             ))}
@@ -129,15 +129,15 @@ const Details = () => {
 
       {tournament.matches.map((match, idx) => (
         <Card key={idx} variant="outlined" sx={{ mb: 2, borderRadius: 2 }}>
-          <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
             <Box>
               <Typography variant="subtitle2" color="text.secondary" gutterBottom>Ronda {idx + 1}</Typography>
               <Typography variant="body2">{match.notes || 'Sin notas'}</Typography>
             </Box>
-            <Box display="flex" alignItems="center" gap={3}>
+            <Box display="flex" alignItems="center" gap={2} flexShrink={0}>
               <Box display="flex" flexDirection="column" alignItems="center">
                 <Typography variant="caption" color="text.secondary" mb={0.5}>Rival</Typography>
-                <AvatarGroup max={2}>
+                <AvatarGroup max={2} sx={{ justifyContent: 'center' }}>
                   {match.opponentDeck.map((p, pIdx) => (
                     <Avatar key={pIdx} src={p.image} sx={{ width: 32, height: 32, bgcolor: 'transparent' }} />
                   ))}

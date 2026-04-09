@@ -116,22 +116,6 @@ const Layout = ({ children, toggleTheme, currentMode }) => {
       )}
 
       <Button
-        variant="tonal"
-        startIcon={currentMode === 'dark' ? <LightMode /> : <DarkMode />}
-        onClick={toggleTheme}
-        fullWidth
-        sx={{
-          justifyContent: 'flex-start',
-          bgcolor: theme.palette.action.hover,
-          p: 1.5,
-          borderRadius: 2,
-          mb: 1
-        }}
-      >
-        {currentMode === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}
-      </Button>
-
-      <Button
         variant="outlined"
         color="error"
         onClick={() => {
@@ -186,7 +170,9 @@ const Layout = ({ children, toggleTheme, currentMode }) => {
               <IconButton color="inherit" onClick={handleDrawerToggle} edge="start" sx={{ mr: 2 }}>
                 <MenuIcon />
               </IconButton>
-              <Typography variant="h6" fontWeight="bold">PokéTracker</Typography>
+
+              <Typography variant="h6" fontWeight="bold" onClick={() => handleNavigate('/')}>PokéTracker</Typography>
+
             </Box>
             <IconButton onClick={toggleTheme}>
               {currentMode === 'dark' ? <LightMode /> : <DarkMode />}

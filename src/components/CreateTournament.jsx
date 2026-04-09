@@ -3,9 +3,9 @@ import { getPokemons } from '../services/api';
 import {
   Box, Typography, TextField, Button, Card,
   CardContent, Divider, IconButton, Grid,
-  useTheme, Paper, Snackbar, Alert
+  useTheme, Paper, Snackbar, Alert, InputAdornment
 } from '@mui/material';
-import { Save, Add, Delete } from '@mui/icons-material';
+import { Save, Add, Delete, CalendarMonth } from '@mui/icons-material';
 
 import PokemonSelect from './PokemonSelect';
 
@@ -133,8 +133,8 @@ export default function CreateTournament({ initialTournament = null, onSave }) {
   };
 
   return (
-    <Box sx={{ p: 3, pt: 4, maxWidth: '800px', margin: '0 auto', width: '100%' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+    <Box sx={{ p: { xs: 2, sm: 3 }, pt: 4, maxWidth: '800px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'wrap', gap: 2 }}>
         <Typography variant="h4" fontWeight="bold">
           {initialTournament ? 'Modificar Torneo' : 'Nuevo Torneo'}
         </Typography>
@@ -157,16 +157,22 @@ export default function CreateTournament({ initialTournament = null, onSave }) {
               <TextField fullWidth label="Nombre del Torneo" value={name} onChange={e => setName(e.target.value)} />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField fullWidth label="Fecha" type="date" InputLabelProps={{ shrink: true }} value={date} onChange={e => setDate(e.target.value)} />
+              <TextField
+                fullWidth
+                label="Fecha"
+                type="date"
+                InputLabelProps={{ shrink: true }}
+                value={date}
+                onChange={e => setDate(e.target.value)}
+              />
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField fullWidth label="Lugar del Torneo" value={location} onChange={e => setLocation(e.target.value)} />
             </Grid>
           </Grid>
-
           <Divider sx={{ my: 3 }} />
 
-          <Typography variant="h6" gutterBottom fontWeight="bold">Mi Deck (2 Pokémon)</Typography>
+          <Typography variant="h6" gutterBottom fontWeight="bold">Mi Deck</Typography>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
               <PokemonSelect
@@ -205,7 +211,7 @@ export default function CreateTournament({ initialTournament = null, onSave }) {
         matches.map((match, index) => (
           <Card key={index} variant="outlined" sx={{ mb: 2, borderRadius: 2 }}>
             <CardContent>
-              <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={1} flexWrap="wrap" gap={1}>
                 <Typography variant="subtitle1" fontWeight="bold" color="text.secondary">Ronda {index + 1}</Typography>
                 <IconButton color="error" size="small" onClick={() => removeMatch(index)}>
                   <Delete fontSize="small" />
@@ -230,8 +236,8 @@ export default function CreateTournament({ initialTournament = null, onSave }) {
                     isMainDeck={false}
                   />
                 </Grid>
-                <Grid item xs={12}>
-                  <Box display="flex" gap={1} justifyContent="center" height="100%">
+                <Grid item size={12}>
+                  <Box display="flex" gap={1} justifyContent="left" flexWrap="wrap">
                     <ResultBtn label="WIN" current={match.result} onClick={() => handleResultChange(index, 'WIN')} />
                     <ResultBtn label="LOSS" current={match.result} onClick={() => handleResultChange(index, 'LOSS')} />
                     <ResultBtn label="TIE" current={match.result} onClick={() => handleResultChange(index, 'TIE')} />

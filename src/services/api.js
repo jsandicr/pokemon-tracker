@@ -1,6 +1,6 @@
-const API_URL = 'http://192.168.100.28:5001/api/tournaments';
-const POKEMON_API_URL = 'http://192.168.100.28:5001/api/pokemon';
-const AUTH_API_URL = 'http://192.168.100.28:5001/api/auth';
+const API_URL = import.meta.env.VITE_API_URL + '/tournaments';
+const POKEMON_API_URL = import.meta.env.VITE_API_URL + '/pokemon';
+const AUTH_API_URL = import.meta.env.VITE_API_URL + '/auth';
 
 let cachedPokemons = null;
 

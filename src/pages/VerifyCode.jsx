@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useContext } from 'react';
 import { Box, TextField, Button, Typography } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { verifyCode, resendCode } from '../services/api';
-import { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import useResendCodeTimer from '../hooks/useResendCodeTimer';
 
 const VerifyCode = () => {
     const { state } = useLocation();
@@ -13,39 +13,17 @@ const VerifyCode = () => {
     const { login } = useContext(AuthContext);
 
     const [code, setCode] = useState('');
-    const [timeLeft, setTimeLeft] = useState(120);
-    const [canResend, setCanResend] = useState(false);
     const [error, setError] = useState('');
+    const [resendLoading, setResendLoading] = useState(false);
 
-    // ⏳ contador
-    useEffect(() => {
-        if (timeLeft <= 0) {
-            setCanResend(true);
-            return;
-        }
-
-        const interval = setInterval(() => {
-            setTimeLeft((prev) => prev - 1);
-        }, 1000);
-
-        return () => clearInterval(interval);
-    }, [timeLeft]);
-
-    const formatTime = () => {
-        const min = Math.floor(timeLeft / 60);
-        const sec = timeLeft % 60;
-        return `${min}:${sec.toString().padStart(2, '0')}`;
-    };
+                const { timeLeft, canResend, startTimer } = useResendCodeTimer('verifyCode', email);
 
     const handleVerify = async () => {
         try {
             const data = await verifyCode({ email, code });
-
-            // ✅ login automático
             login(data);
             navigate('/');
-
-        } catch (err) {
+        } catch {
             setError('El código no es válido');
         }
     };
@@ -53,12 +31,14 @@ const VerifyCode = () => {
     const handleResend = async () => {
         if (!canResend) return;
 
+        setResendLoading(true);
         try {
             await resendCode({ email });
-            setTimeLeft(120);
-            setCanResend(false);
-        } catch (err) {
+            startTimer();
+        } catch {
             setError('Error al reenviar código');
+        } finally {
+            setResendLoading(false);
         }
     };
 
@@ -82,16 +62,17 @@ const VerifyCode = () => {
             <Box mt={3}>
                 <Button
                     onClick={handleResend}
-                    disabled={!canResend}
+                    disabled={!canResend || resendLoading}
                     sx={{
                         background: 'none',
-                        color: canResend ? 'blue' : 'gray',
-                        textDecoration: 'underline',
+                        color: canResend ? '#ffcb05' : 'gray',
+                        textDecoration: canResend ? 'underline' : 'none',
+                        fontWeight: canResend ? 'bold' : 'normal',
                     }}
                 >
-                    {canResend
-                        ? 'Reenviar código'
-                        : `Reenviar en ${formatTime()}`}
+                    {canResend 
+                        ? (resendLoading ? 'Enviando...' : 'Reenviar código')
+                        : `Espera ${timeLeft} segundos para reenviar el código`}
                 </Button>
             </Box>
 

@@ -1,9 +1,10 @@
 import { useState, useContext } from 'react';
 import { Box, Typography, TextField, Button, Card, CardContent, Snackbar, Alert, InputAdornment, IconButton } from '@mui/material';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { resetPassword } from '../services/api';
+import { resetPassword, requestResetPassword } from '../services/api';
 import { AuthContext } from '../context/AuthContext';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import useResendCodeTimer from '../hooks/useResendCodeTimer';
 
 const ResetPassword = () => {
   const { state } = useLocation();
@@ -20,6 +21,25 @@ const ResetPassword = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [resendLoading, setResendLoading] = useState(false);
+
+  const { timeLeft, canResend, startTimer } = useResendCodeTimer('resetPassword', email);
+
+  const handleResendCode = async () => {
+    if (!canResend) return;
+    
+    setResendLoading(true);
+    setError('');
+    
+    try {
+      await requestResetPassword(email);
+      startTimer();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setResendLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -81,6 +101,24 @@ const ResetPassword = () => {
               inputProps={{ maxLength: 6 }}
               placeholder="Ej: 123456"
             />
+
+            <Box textAlign="center" mt={1} mb={2}>
+              <Button
+                onClick={handleResendCode}
+                disabled={!canResend || resendLoading}
+                sx={{
+                  background: 'none',
+                  color: canResend ? '#ffcb05' : 'gray',
+                  textDecoration: canResend ? 'underline' : 'none',
+                  fontWeight: canResend ? 'bold' : 'normal',
+                  cursor: canResend ? 'pointer' : 'default',
+                }}
+              >
+                {canResend 
+                  ? (resendLoading ? 'Enviando...' : 'Reenviar código')
+                  : `Espera ${timeLeft} segundos para reenviar el código`}
+              </Button>
+            </Box>
 
             <TextField
               fullWidth

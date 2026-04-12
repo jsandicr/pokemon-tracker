@@ -46,9 +46,6 @@ const Layout = ({ children, toggleTheme, currentMode }) => {
       }}>
         PokéTracker
       </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
-        Menú Principal
-      </Typography>
 
       <Divider sx={{ mb: 2 }} />
 

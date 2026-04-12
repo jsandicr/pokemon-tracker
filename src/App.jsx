@@ -12,9 +12,12 @@ import Details from './pages/Details';
 import EditTournament from './pages/EditTournament';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 // AuthContext
 import { AuthProvider, AuthContext } from './context/AuthContext';
+import VerifyCode from './pages/VerifyCode';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useContext(AuthContext);
@@ -55,6 +58,9 @@ function App() {
                 Let's not use Layout for login so it looks cleaner */}
             <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
             <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+            <Route path="/verify-code" element={<PublicRoute><VerifyCode /></PublicRoute>} />
+            <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
+            <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
 
             {/* Protected Routes enclosed in Layout */}
             <Route
@@ -74,6 +80,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>

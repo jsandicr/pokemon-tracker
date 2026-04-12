@@ -1,103 +1,115 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useContext } from 'react';
 import { Box, Typography, TextField, Button, Card, CardContent, Snackbar, Alert, InputAdornment, IconButton } from '@mui/material';
-import { useNavigate, Link } from 'react-router-dom';
-import { registerUser, getPokemons } from '../services/api';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { resetPassword } from '../services/api';
 import { AuthContext } from '../context/AuthContext';
-import PokemonSelect from '../components/PokemonSelect';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
-const Register = () => {
+const ResetPassword = () => {
+  const { state } = useLocation();
+  const email = state?.email;
+
   const navigate = useNavigate();
   const { login } = useContext(AuthContext);
-  useDocumentTitle('Registro');
+  useDocumentTitle('Restablecer Contraseña');
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [code, setCode] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [favoritePokemon, setFavoritePokemon] = useState('');
-  const [pokemonList, setPokemonList] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    getPokemons().then(setPokemonList).catch(console.error);
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (password !== confirmPassword) {
-      return setError('Las contraseñas no coinciden');
-    }
-
-    if (!favoritePokemon) {
-      return setError('Debes elegir a tu Pokémon favorito');
-    }
+    setLoading(true);
+    setError('');
 
     try {
-      await registerUser({ email, password, confirmPassword, favoritePokemon });
-
-      // 👉 redirigir a verificación
-      navigate('/verify-code', { state: { email } });
-
+      const data = await resetPassword({ email, code, newPassword, confirmPassword });
+      login(data);
+      navigate('/');
     } catch (err) {
       setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
+
+  if (!email) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh', p: 2 }}>
+        <Card sx={{ maxWidth: 400, width: '100%', borderRadius: 4, p: 2 }}>
+          <CardContent>
+            <Typography variant="h6" textAlign="center" gutterBottom>
+              Acceso no válido
+            </Typography>
+            <Typography variant="body2" color="text.secondary" textAlign="center" mb={3}>
+              Por favor, inicia el proceso de recuperación desde el login
+            </Typography>
+            <Button fullWidth variant="contained" component={Link} to="/forgot-password">
+              Ir a Recuperar Contraseña
+            </Button>
+          </CardContent>
+        </Card>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh', p: 2 }}>
       <Card sx={{ maxWidth: 400, width: '100%', borderRadius: 4, p: 2, boxShadow: '0 8px 32px 0 rgba(0,0,0,0.2)' }}>
         <CardContent>
           <Typography variant="h4" fontWeight="bold" textAlign="center" gutterBottom>
-            Registro
+            Nueva Contraseña
           </Typography>
           <Typography variant="body2" color="text.secondary" textAlign="center" mb={3}>
-            Crea tu cuenta para guardar tus torneos
+            Ingresa tu nueva contraseña y el código enviado a {email}
           </Typography>
 
           <form onSubmit={handleSubmit}>
             <TextField
               fullWidth
-              label="Correo Electrónico"
-              type="email"
+              label="Código de Verificación"
+              type="text"
               variant="outlined"
               margin="normal"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
               required
+              inputProps={{ maxLength: 6 }}
+              placeholder="Ej: 123456"
             />
+
             <TextField
               fullWidth
-              label="Contraseña"
-              type={showPassword ? "text" : "password"}
+              label="Nueva Contraseña"
+              type={showNewPassword ? "text" : "password"}
               variant="outlined"
               margin="normal"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
               required
               helperText="Mín. 8 caracteres, 1 mayúscula, 1 minúscula/letra y 1 número"
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowPassword(!showPassword)}
-                      edge="end"
-                    >
+                    <IconButton onClick={() => setShowNewPassword(!showNewPassword)} edge="end">
                       <img
                         src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/201.png"
                         alt="Toggle Password"
-                        style={{ width: 24, height: 24, filter: showPassword ? 'drop-shadow(0 0 2px rgba(0,0,0,0.5))' : 'grayscale(100%) opacity(0.4)' }}
+                        style={{ width: 24, height: 24, filter: showNewPassword ? 'drop-shadow(0 0 2px rgba(0,0,0,0.5))' : 'grayscale(100%) opacity(0.4)' }}
                       />
                     </IconButton>
                   </InputAdornment>
                 )
               }}
             />
+
             <TextField
               fullWidth
-              label="Confirmar Contraseña"
+              label="Confirmar Nueva Contraseña"
               type={showConfirmPassword ? "text" : "password"}
               variant="outlined"
               margin="normal"
@@ -107,10 +119,7 @@ const Register = () => {
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      edge="end"
-                    >
+                    <IconButton onClick={() => setShowConfirmPassword(!showConfirmPassword)} edge="end">
                       <img
                         src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/201.png"
                         alt="Toggle Password"
@@ -122,30 +131,20 @@ const Register = () => {
               }}
             />
 
-            <Box sx={{ mt: 2, mb: 1 }}>
-              <PokemonSelect
-                label="Tu Pokémon Favorito"
-                value={favoritePokemon}
-                onChange={setFavoritePokemon}
-                options={pokemonList}
-                isMainDeck={true}
-              />
-            </Box>
-
             <Button
               type="submit"
               fullWidth
               variant="contained"
               size="large"
-              color="secondary"
               sx={{ mt: 3, mb: 2, borderRadius: 8, py: 1.5 }}
+              disabled={loading}
             >
-              Registrarse
+              {loading ? 'Restableciendo...' : 'Cambiar Contraseña'}
             </Button>
           </form>
 
           <Typography textAlign="center" variant="body2" mt={2}>
-            ¿Ya tienes cuenta?{' '}
+            ¿Recordaste tu contraseña?{' '}
             <Link to="/login" style={{ color: '#ffcb05', textDecoration: 'none', fontWeight: 'bold' }}>
               Inicia sesión aquí
             </Link>
@@ -153,7 +152,7 @@ const Register = () => {
         </CardContent>
       </Card>
 
-      <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError('')} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+      <Snackbar open={!!error} autoHideDuration={4000} onClose={() => setError('')} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
         <Alert onClose={() => setError('')} severity="error" sx={{ width: '100%' }} variant="filled">
           {error}
         </Alert>
@@ -162,4 +161,4 @@ const Register = () => {
   );
 };
 
-export default Register;
+export default ResetPassword;

@@ -25,6 +25,38 @@ export const registerUser = async (data) => {
   return response.json();
 };
 
+export const verifyCode = async (data) => {
+  const response = await fetch(`${AUTH_API_URL}/verify`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+
+  const json = await response.json();
+
+  if (!response.ok) {
+    throw new Error(json.message || 'Error al verificar el código');
+  }
+
+  return json;
+};
+
+export const resendCode = async (data) => {
+  const response = await fetch(`${AUTH_API_URL}/resend`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+
+  const json = await response.json();
+
+  if (!response.ok) {
+    throw new Error(json.message || 'Error al reenviar el código');
+  }
+
+  return json;
+};
+
 export const loginUser = async (data) => {
   const response = await fetch(`${AUTH_API_URL}/login`, {
     method: 'POST',
@@ -34,6 +66,32 @@ export const loginUser = async (data) => {
   if (!response.ok) {
     const err = await response.json();
     throw new Error(err.message || 'Error al iniciar sesión');
+  }
+  return response.json();
+};
+
+export const requestResetPassword = async (email) => {
+  const response = await fetch(`${AUTH_API_URL}/request-reset`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email })
+  });
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.message || 'Error al solicitar recuperación');
+  }
+  return response.json();
+};
+
+export const resetPassword = async (data) => {
+  const response = await fetch(`${AUTH_API_URL}/reset-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.message || 'Error al restablecer contraseña');
   }
   return response.json();
 };

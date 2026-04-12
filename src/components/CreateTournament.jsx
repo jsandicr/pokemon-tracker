@@ -3,9 +3,10 @@ import { getPokemons } from '../services/api';
 import {
   Box, Typography, TextField, Button, Card,
   CardContent, Divider, IconButton, Grid,
-  useTheme, Paper, Snackbar, Alert, InputAdornment
+  useTheme, Paper, Snackbar, Alert
 } from '@mui/material';
-import { Save, Add, Delete, CalendarMonth } from '@mui/icons-material';
+import { Save, Add, Delete } from '@mui/icons-material';
+import { CircularProgress } from '@mui/material';
 
 import PokemonSelect from './PokemonSelect';
 
@@ -18,6 +19,7 @@ export default function CreateTournament({ initialTournament = null, onSave }) {
   const [matches, setMatches] = useState([]);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'error' });
   const [pokemonList, setPokemonList] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     getPokemons().then(setPokemonList).catch(console.error);
@@ -77,41 +79,50 @@ export default function CreateTournament({ initialTournament = null, onSave }) {
   };
 
   const handleSave = async () => {
-    // Basic validation
-    if (!name || !date || !location) {
-      setSnackbar({ open: true, message: 'Completa los datos generales del torneo.', severity: 'error' });
-      return;
-    }
-    if (!deck[0] || !deck[1]) {
-      setSnackbar({ open: true, message: 'Selecciona los dos Pokémon de tu deck.', severity: 'error' });
-      return;
-    }
-    if (matches.some(m => !m.opp1 || !m.opp2 || !m.result)) {
-      setSnackbar({ open: true, message: 'Hay rondas con datos incompletos.', severity: 'error' });
-      return;
-    }
+  if (loading) return; // evita doble click
 
-    const deck1Name = pokemonList.find(p => p.id === deck[0])?.name || '';
-    const deck2Name = pokemonList.find(p => p.id === deck[1])?.name || '';
-    const deckUsed = `${deck1Name}/${deck2Name}`;
+  // Validaciones...
+  if (!name || !date || !location) {
+    setSnackbar({ open: true, message: 'Completa los datos generales del torneo.', severity: 'error' });
+    return;
+  }
 
-    const formattedMatches = matches.map(m => {
-      const opp1Name = pokemonList.find(p => p.id === m.opp1)?.name || '';
-      const opp2Name = pokemonList.find(p => p.id === m.opp2)?.name || '';
-      return {
-        opponentDeck: `${opp1Name}/${opp2Name}`,
-        result: m.result === 'TIE' ? 'draw' : m.result.toLowerCase(),
-        notes: m.notes
-      };
-    });
+  if (!deck[0] || !deck[1]) {
+    setSnackbar({ open: true, message: 'Selecciona los dos Pokémon de tu deck.', severity: 'error' });
+    return;
+  }
 
-    try {
-      await onSave({ name, date, location, deckUsed, matches: formattedMatches });
-      setSnackbar({ open: true, message: 'Torneo guardado exitosamente', severity: 'success' });
-    } catch (error) {
-      setSnackbar({ open: true, message: error.message || 'Error al guardar el torneo', severity: 'error' });
-    }
-  };
+  if (matches.some(m => !m.opp1 || !m.opp2 || !m.result)) {
+    setSnackbar({ open: true, message: 'Hay rondas con datos incompletos.', severity: 'error' });
+    return;
+  }
+
+  const deck1Name = pokemonList.find(p => p.id === deck[0])?.name || '';
+  const deck2Name = pokemonList.find(p => p.id === deck[1])?.name || '';
+  const deckUsed = `${deck1Name}/${deck2Name}`;
+
+  const formattedMatches = matches.map(m => {
+    const opp1Name = pokemonList.find(p => p.id === m.opp1)?.name || '';
+    const opp2Name = pokemonList.find(p => p.id === m.opp2)?.name || '';
+    return {
+      opponentDeck: `${opp1Name}/${opp2Name}`,
+      result: m.result === 'TIE' ? 'draw' : m.result.toLowerCase(),
+      notes: m.notes
+    };
+  });
+
+  try {
+    setLoading(true); // 👈 START loader
+
+    await onSave({ name, date, location, deckUsed, matches: formattedMatches });
+
+    setSnackbar({ open: true, message: 'Torneo guardado exitosamente', severity: 'success' });
+  } catch (error) {
+    setSnackbar({ open: true, message: error.message || 'Error al guardar el torneo', severity: 'error' });
+  } finally {
+    setLoading(false); // 👈 STOP loader
+  }
+};
 
 
 
@@ -139,14 +150,17 @@ export default function CreateTournament({ initialTournament = null, onSave }) {
           {initialTournament ? 'Modificar Torneo' : 'Nuevo Torneo'}
         </Typography>
         <Button
-          variant="contained"
-          color="secondary"
-          startIcon={<Save />}
-          onClick={handleSave}
-          sx={{ borderRadius: 8, px: 3 }}
-        >
-          Guardar
-        </Button>
+  variant="contained"
+  color="secondary"
+  startIcon={
+    loading ? <CircularProgress size={20} color="inherit" /> : <Save />
+  }
+  onClick={handleSave}
+  disabled={loading}
+  sx={{ borderRadius: 8, px: 3 }}
+>
+  {loading ? 'Guardando...' : 'Guardar'}
+</Button>
       </Box>
 
       <Card sx={{ mb: 4, borderRadius: 3 }}>

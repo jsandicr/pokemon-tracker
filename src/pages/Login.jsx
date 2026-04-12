@@ -13,15 +13,19 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const data = await loginUser({ email, password });
       login(data);
       navigate('/');
     } catch (err) {
       setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -78,18 +82,25 @@ const Login = () => {
               fullWidth
               variant="contained"
               size="large"
-              sx={{ mt: 3, mb: 2, borderRadius: 8, py: 1.5 }}
+              sx={{ mt: 3, mb: 1, borderRadius: 8, py: 1.5 }}
+              disabled={loading}
             >
-              Entrar
+              {loading ? 'Iniciando...' : 'Entrar'}
             </Button>
-          </form>
 
-          <Typography textAlign="center" variant="body2" mt={2}>
-            ¿No tienes cuenta?{' '}
-            <Link to="/register" style={{ color: '#ffcb05', textDecoration: 'none', fontWeight: 'bold' }}>
-              Regístrate aquí
-            </Link>
-          </Typography>
+            <Typography textAlign="center" variant="body2" mb={2}>
+              <Link to="/forgot-password" style={{ color: '#ffcb05', textDecoration: 'none', fontWeight: 'bold' }}>
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </Typography>
+
+            <Typography textAlign="center" variant="body2">
+              ¿No tienes cuenta?{' '}
+              <Link to="/register" style={{ color: '#ffcb05', textDecoration: 'none', fontWeight: 'bold' }}>
+                Regístrate aquí
+              </Link>
+            </Typography>
+          </form>
         </CardContent>
       </Card>
 

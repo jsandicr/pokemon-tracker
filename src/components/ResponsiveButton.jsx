@@ -58,6 +58,9 @@ const ResponsiveIconButton = ({
             size={size}
             disabled={disabled || loading}
             sx={colorStyles}
+            style={{
+                padding: '5px'
+            }}
         >
             {loading ? 'Guardando...' : label}
         </Button>

@@ -11,7 +11,7 @@ import { CircularProgress } from '@mui/material';
 import PokemonSelect from './PokemonSelect';
 import { useNavigate } from 'react-router-dom';
 import ResponsiveIconButton from './ResponsiveButton';
-import { blue } from '@mui/material/colors';
+import { blue, yellow } from '@mui/material/colors';
 
 export default function CreateTournament({ initialTournament = null, onSave }) {
   const navigate = useNavigate();
@@ -171,7 +171,6 @@ export default function CreateTournament({ initialTournament = null, onSave }) {
           onClick={handleSave}
           loading={loading}
           disabled={loading}
-          variant="contained"
           colorStyles={{
             color: blue[800],
             borderColor: blue[800],

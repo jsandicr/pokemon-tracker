@@ -9,12 +9,12 @@ import {
   useMediaQuery,
   useTheme
 } from '@mui/material';
-import { yellow, red } from '@mui/material/colors';
+import { yellow, red, blue } from '@mui/material/colors';
 import { ArrowBack, Edit, Add } from '@mui/icons-material';
 import { getTournamentById, deleteTournament, getPokemons, updateTournament } from '../services/api';
 import PokemonSelect from '../components/PokemonSelect';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
-import { Trash2 } from 'lucide-react';
+import { Save, Trash2 } from 'lucide-react';
 import ResponsiveIconButton from '../components/ResponsiveButton';
 
 const Details = () => {
@@ -319,14 +319,20 @@ const Details = () => {
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setModalOpen(false)} disabled={savingMatch} color="inherit">Cancelar</Button>
-          <Button
+          <ResponsiveIconButton
+            icon={<Save />}
+            label="Guardar"
             onClick={handleSaveMatch}
-            variant="contained"
             disabled={savingMatch}
-            startIcon={savingMatch ? <CircularProgress size={20} color="inherit" /> : <Add />}
-          >
-            Guardar
-          </Button>
+            colorStyles={{
+              color: blue[800],
+              borderColor: blue[800],
+              '&:hover': {
+                borderColor: blue[900],
+                backgroundColor: blue[50],
+              }
+            }}
+          />
         </DialogActions>
       </Dialog>
 

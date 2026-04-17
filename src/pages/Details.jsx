@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -7,7 +7,8 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
   Dialog, DialogTitle, DialogContent, DialogActions, Grid, TextField, Snackbar, Alert, CircularProgress,
   useMediaQuery,
-  useTheme
+  useTheme,
+  Collapse
 } from '@mui/material';
 import { yellow, red, blue } from '@mui/material/colors';
 import { ArrowBack, Edit, Add } from '@mui/icons-material';
@@ -32,6 +33,8 @@ const Details = () => {
   const [newMatch, setNewMatch] = useState({ opp1: '', opp2: '', result: '', notes: '' });
   const [savingMatch, setSavingMatch] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
+  const [expandedMatchIndex, setExpandedMatchIndex] = useState(null);
+  const [editMatch, setEditMatch] = useState({ opp1: '', opp2: '', result: '', notes: '' });
 
   const fetchData = async () => {
     try {
@@ -86,6 +89,82 @@ const Details = () => {
     }
   };
 
+  const handleDeleteMatch = async (indexToRemove) => {
+    try {
+      const currentMatchesForApi = tournament.matches.map((m, idx) => {
+        if (idx === indexToRemove) return null;
+        return {
+          opponentDeck: m.opponentDeck.map(p => p.name).filter(Boolean).join('/'),
+          result: m.result === 'TIE' ? 'draw' : m.result.toLowerCase(),
+          notes: m.notes || ''
+        };
+      }).filter(Boolean);
+
+      const deckNamesList = tournament.deck.map(p => p.name).filter(Boolean).join('/');
+
+      const updatedData = {
+        name: tournament.name,
+        date: tournament.rawDate,
+        location: tournament.location,
+        deckUsed: deckNamesList,
+        matches: currentMatchesForApi
+      };
+
+      await updateTournament(tournament.id, updatedData);
+      setSnackbar({ open: true, message: 'Ronda eliminada exitosamente', severity: 'success' });
+      setExpandedMatchIndex(null);
+      fetchData(); // reload
+    } catch (error) {
+      setSnackbar({ open: true, message: error.message || 'Error al eliminar la ronda', severity: 'error' });
+    }
+  };
+
+  const handleUpdateMatch = async (indexToUpdate) => {
+    if ((!editMatch.opp1 && !editMatch.opp2) || !editMatch.result) {
+      setSnackbar({ open: true, message: 'Selecciona al menos un Pokémon y un resultado', severity: 'error' });
+      return;
+    }
+
+    setSavingMatch(true);
+    try {
+      const currentMatchesForApi = tournament.matches.map((m, idx) => {
+        if (idx === indexToUpdate) {
+          const opp1Name = pokemons.find(p => p.id === editMatch.opp1)?.name || '';
+          const opp2Name = pokemons.find(p => p.id === editMatch.opp2)?.name || '';
+          return {
+            opponentDeck: [opp1Name, opp2Name].filter(Boolean).join('/'),
+            result: editMatch.result === 'TIE' ? 'draw' : editMatch.result.toLowerCase(),
+            notes: editMatch.notes || ''
+          };
+        }
+        return {
+          opponentDeck: m.opponentDeck.map(p => p.name).filter(Boolean).join('/'),
+          result: m.result === 'TIE' ? 'draw' : m.result.toLowerCase(),
+          notes: m.notes || ''
+        };
+      });
+
+      const deckNamesList = tournament.deck.map(p => p.name).filter(Boolean).join('/');
+
+      const updatedData = {
+        name: tournament.name,
+        date: tournament.rawDate,
+        location: tournament.location,
+        deckUsed: deckNamesList,
+        matches: currentMatchesForApi
+      };
+
+      await updateTournament(tournament.id, updatedData);
+      setSnackbar({ open: true, message: 'Ronda actualizada exitosamente', severity: 'success' });
+      setExpandedMatchIndex(null);
+      fetchData(); // reload
+    } catch (error) {
+      setSnackbar({ open: true, message: error.message || 'Error al actualizar', severity: 'error' });
+    } finally {
+      setSavingMatch(false);
+    }
+  };
+
   const handleSaveMatch = async () => {
     if ((!newMatch.opp1 && !newMatch.opp2) || !newMatch.result) {
       setSnackbar({ open: true, message: 'Selecciona al menos un Pokémon y un resultado', severity: 'error' });
@@ -135,7 +214,7 @@ const Details = () => {
       variant={current === label ? 'contained' : 'outlined'}
       onClick={onClick}
       size="small"
-      color={label === 'WIN' ? 'primary' : label === 'LOSS' ? 'error' : 'warning'}
+      color={label === 'WIN' ? 'success' : label === 'LOSS' ? 'error' : 'warning'}
       sx={{ minWidth: { xs: 50, sm: 80 } }}
     >
       {label}
@@ -227,7 +306,7 @@ const Details = () => {
       </Card>
 
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h5" fontWeight="bold">Historial de Partidas</Typography>
+        <Typography variant="h5" fontWeight="bold">Historial</Typography>
         <Button startIcon={<Add />} variant="outlined" onClick={() => setModalOpen(true)} sx={{ borderRadius: 4 }}>
           Agregar Ronda
         </Button>
@@ -244,33 +323,135 @@ const Details = () => {
           </TableHead>
           <TableBody>
             {tournament.matches.map((match, idx) => {
-              let bgColor = 'inherit';
-              if (match.result === 'WIN') bgColor = 'rgba(76, 175, 80, 0.15)';
-              if (match.result === 'LOSS') bgColor = 'rgba(244, 67, 54, 0.15)';
-              if (match.result === 'TIE') bgColor = 'rgba(255, 152, 0, 0.15)';
+
+              const resultColors = {
+                WIN: 'rgba(76, 175, 80, 0.15)',
+                LOSS: 'rgba(244, 67, 54, 0.15)',
+                TIE: 'rgba(255, 152, 0, 0.15)'
+              };
+
+              const isExpanded = expandedMatchIndex === idx;
+
+              const bgColor = isExpanded
+                ? '#fff'
+                : resultColors[match.result] || 'inherit';
+
+
+              const handleRowClick = () => {
+                if (isExpanded) {
+                  setExpandedMatchIndex(null);
+                } else {
+                  setExpandedMatchIndex(idx);
+                  const opp1 = match.opponentDeck[0];
+                  const opp2 = match.opponentDeck[1];
+                  setEditMatch({
+                    opp1: (opp1 && opp1.id) || (opp1 && pokemons.find(p => p.name === opp1?.name)?.id) || '',
+                    opp2: (opp2 && opp2.id) || (opp2 && pokemons.find(p => p.name === opp2?.name)?.id) || '',
+                    result: match.result || '',
+                    notes: match.notes || ''
+                  });
+                }
+              };
 
               return (
-                <TableRow key={idx} sx={{ backgroundColor: bgColor }}>
-                  <TableCell>
-                    <Typography variant="subtitle2" fontWeight="bold" color="text.secondary">
-                      {idx + 1}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="center">
-                    <AvatarGroup max={3} sx={{ justifyContent: 'center' }}>
-                      {match.opponentDeck.map((p, pIdx) => (
-                        <Avatar key={pIdx} src={p.image} sx={{ width: 32, height: 32, bgcolor: 'background.paper' }} />
-                      ))}
-                    </AvatarGroup>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Chip
-                      label={isMobile ? match.result.substring(0, 1) : match.result}
-                      color={match.result === 'WIN' ? 'success' : match.result === 'LOSS' ? 'error' : 'warning'}
-                      sx={{ fontWeight: 'bold' }}
-                    />
-                  </TableCell>
-                </TableRow>
+                <React.Fragment key={idx}>
+                  <TableRow
+                    onClick={handleRowClick}
+                    sx={{ backgroundColor: bgColor, cursor: 'pointer', transition: 'background-color 0.2s, filter 0.2s', '&:hover': { filter: 'brightness(0.95)' } }}
+                  >
+                    <TableCell>
+                      <Typography variant="subtitle2" fontWeight="bold" color="text.secondary">
+                        {idx + 1}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="center">
+                      <AvatarGroup max={3} sx={{ justifyContent: 'center' }}>
+                        {match.opponentDeck.map((p, pIdx) => (
+                          <Avatar key={pIdx} src={p.image} sx={{ width: 32, height: 32, bgcolor: 'background.paper' }} />
+                        ))}
+                      </AvatarGroup>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Chip
+                        label={isMobile ? match.result.substring(0, 1) : match.result}
+                        color={match.result === 'WIN' ? 'success' : match.result === 'LOSS' ? 'error' : 'warning'}
+                        sx={{ fontWeight: 'bold' }}
+                      />
+                    </TableCell>
+                  </TableRow>
+                  <TableRow sx={{ backgroundColor: bgColor }}>
+                    <TableCell style={{ paddingBottom: 0, paddingTop: 0, border: 0 }} colSpan={3}>
+                      <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                        <Box sx={{ margin: 1, p: 2, bgcolor: 'background.paper', borderRadius: 2 }}>
+                          <Grid container spacing={2}>
+                            <Grid item xs={12} sm={6}>
+                              <PokemonSelect
+                                label="Pokémon Rival 1"
+                                value={editMatch.opp1}
+                                onChange={(val) => setEditMatch(prev => ({ ...prev, opp1: val }))}
+                                options={pokemons}
+                                isMainDeck={false}
+                              />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                              <PokemonSelect
+                                label="Pokémon Rival 2"
+                                value={editMatch.opp2}
+                                onChange={(val) => setEditMatch(prev => ({ ...prev, opp2: val }))}
+                                options={pokemons}
+                                isMainDeck={false}
+                              />
+                            </Grid>
+                            <Grid item xs={12}>
+                              <Box display="flex" gap={1} mb={2}>
+                                <ResultBtn label="WIN" current={editMatch.result} onClick={() => setEditMatch(prev => ({ ...prev, result: 'WIN' }))} />
+                                <ResultBtn label="LOSS" current={editMatch.result} onClick={() => setEditMatch(prev => ({ ...prev, result: 'LOSS' }))} />
+                                <ResultBtn label="TIE" current={editMatch.result} onClick={() => setEditMatch(prev => ({ ...prev, result: 'TIE' }))} />
+                              </Box>
+
+                              <TextField
+                                style={{ margin: '5px 0' }}
+                                fullWidth
+                                size="small"
+                                placeholder="Notas (ej. Mala mano, misplay...)"
+                                value={editMatch.notes}
+                                onChange={e => setEditMatch(prev => ({ ...prev, notes: e.target.value }))}
+                              />
+                            </Grid>
+                          </Grid>
+                          <Box display="flex" gap={1.5} mt={1}>
+                            <ResponsiveIconButton
+                              icon={<Trash2 size={18} />}
+                              label="Eliminar"
+                              onClick={(e) => { e.stopPropagation(); handleDeleteMatch(idx); }}
+                              colorStyles={{
+                                color: red[800],
+                                borderColor: red[800],
+                                '&:hover': {
+                                  borderColor: red[900],
+                                  backgroundColor: red[50],
+                                }
+                              }}
+                            />
+                            <ResponsiveIconButton
+                              icon={<Save size={18} />}
+                              label="Guardar"
+                              onClick={(e) => { e.stopPropagation(); handleUpdateMatch(idx); }}
+                              colorStyles={{
+                                color: blue[800],
+                                borderColor: blue[800],
+                                '&:hover': {
+                                  borderColor: blue[900],
+                                  backgroundColor: blue[50],
+                                }
+                              }}
+                            />
+                          </Box>
+                        </Box>
+                      </Collapse>
+                    </TableCell>
+                  </TableRow>
+                </React.Fragment>
               );
             })}
           </TableBody>

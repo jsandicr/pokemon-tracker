@@ -3,10 +3,13 @@ import {
   Box, Typography, Card, CardContent, Avatar,
   AvatarGroup, Button, styled, useTheme, Chip
 } from '@mui/material';
-import { deleteTournament, getTournaments, getPokemons } from '../services/api';
-import { Add as AddIcon } from '@mui/icons-material';
+import { getTournaments, getPokemons } from '../services/api';
+import { Add, Add as AddIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import ResponsiveIconButton from '../components/ResponsiveButton';
+import { Save, Trash2 } from 'lucide-react';
+import { blue } from '@mui/material/colors';
 
 const PremiumCard = styled(Card)(({ theme }) => ({
   marginBottom: theme.spacing(2),
@@ -66,15 +69,19 @@ const Home = () => {
         <Typography variant="h4" fontWeight="bold">
           Mis Torneos
         </Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddIcon />}
+        <ResponsiveIconButton
+          icon={<Add size={18} />}
+          label="Nuevo Torneo"
           onClick={() => navigate('/new')}
-          sx={{ px: 3, py: 1.5, boxShadow: `0 4px 14px 0 ${theme.palette.primary.main}80` }}
-        >
-          Nuevo Torneo
-        </Button>
+          colorStyles={{
+            color: blue[800],
+            borderColor: blue[800],
+            '&:hover': {
+              borderColor: blue[900],
+              backgroundColor: blue[50],
+            }
+          }}
+        />
       </Box>
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>

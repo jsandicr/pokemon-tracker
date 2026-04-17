@@ -38,14 +38,21 @@ const Layout = ({ children, toggleTheme, currentMode }) => {
 
   const menuContent = (
     <Box sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Typography variant="h5" sx={{
-        fontWeight: 'bold', mb: 1,
-        background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
-      }}>
-        PokéTracker
-      </Typography>
+      <Box display='flex' justifyContent='space-between' alignItems='center'>
+        <Typography variant="h5" sx={{
+          fontWeight: 'bold',
+          background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+        }}>
+          DuelTracker
+        </Typography>
+        {isDesktop &&
+          <IconButton onClick={toggleTheme}>
+            {currentMode === 'dark' ? <LightMode /> : <DarkMode />}
+          </IconButton>
+        }
+      </Box>
 
       <Divider sx={{ mb: 2 }} />
 
@@ -170,7 +177,7 @@ const Layout = ({ children, toggleTheme, currentMode }) => {
                 <MenuIcon />
               </IconButton>
 
-              <Typography variant="h6" fontWeight="bold" onClick={() => handleNavigate('/')}>PokéTracker</Typography>
+              <Typography variant="h6" fontWeight="bold" onClick={() => handleNavigate('/')}>DuelTracker</Typography>
 
             </Box>
             <IconButton onClick={toggleTheme}>

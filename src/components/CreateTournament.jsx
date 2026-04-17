@@ -5,12 +5,16 @@ import {
   CardContent, Divider, IconButton, Grid,
   useTheme, Paper, Snackbar, Alert
 } from '@mui/material';
-import { Save, Add, Delete } from '@mui/icons-material';
+import { Save, Add, Delete, ArrowBack } from '@mui/icons-material';
 import { CircularProgress } from '@mui/material';
 
 import PokemonSelect from './PokemonSelect';
+import { useNavigate } from 'react-router-dom';
+import ResponsiveIconButton from './ResponsiveButton';
+import { blue } from '@mui/material/colors';
 
 export default function CreateTournament({ initialTournament = null, onSave }) {
+  const navigate = useNavigate();
   // State variables
   const [name, setName] = useState('');
   const [date, setDate] = useState('');
@@ -58,7 +62,7 @@ export default function CreateTournament({ initialTournament = null, onSave }) {
   const addMatch = () => {
     if (matches.length > 0) {
       const last = matches[matches.length - 1];
-      if (!last.opp1 || !last.opp2 || !last.result) {
+      if ((!last.opp1 && !last.opp2) || !last.result) {
         setSnackbar({ open: true, message: 'Completa la ronda actual antes de añadir otra.', severity: 'warning' });
         return;
       }
@@ -79,50 +83,50 @@ export default function CreateTournament({ initialTournament = null, onSave }) {
   };
 
   const handleSave = async () => {
-  if (loading) return; // evita doble click
+    if (loading) return; // evita doble click
 
-  // Validaciones...
-  if (!name || !date || !location) {
-    setSnackbar({ open: true, message: 'Completa los datos generales del torneo.', severity: 'error' });
-    return;
-  }
+    // Validaciones...
+    if (!name || !date || !location) {
+      setSnackbar({ open: true, message: 'Completa los datos generales del torneo.', severity: 'error' });
+      return;
+    }
 
-  if (!deck[0] || !deck[1]) {
-    setSnackbar({ open: true, message: 'Selecciona los dos Pokémon de tu deck.', severity: 'error' });
-    return;
-  }
+    if (!deck[0] && !deck[1]) {
+      setSnackbar({ open: true, message: 'Selecciona al menos un Pokémon para tu deck.', severity: 'error' });
+      return;
+    }
 
-  if (matches.some(m => !m.opp1 || !m.opp2 || !m.result)) {
-    setSnackbar({ open: true, message: 'Hay rondas con datos incompletos.', severity: 'error' });
-    return;
-  }
+    if (matches.some(m => (!m.opp1 && !m.opp2) || !m.result)) {
+      setSnackbar({ open: true, message: 'Hay rondas con datos incompletos.', severity: 'error' });
+      return;
+    }
 
-  const deck1Name = pokemonList.find(p => p.id === deck[0])?.name || '';
-  const deck2Name = pokemonList.find(p => p.id === deck[1])?.name || '';
-  const deckUsed = `${deck1Name}/${deck2Name}`;
+    const deck1Name = pokemonList.find(p => p.id === deck[0])?.name || '';
+    const deck2Name = pokemonList.find(p => p.id === deck[1])?.name || '';
+    const deckUsed = [deck1Name, deck2Name].filter(Boolean).join('/');
 
-  const formattedMatches = matches.map(m => {
-    const opp1Name = pokemonList.find(p => p.id === m.opp1)?.name || '';
-    const opp2Name = pokemonList.find(p => p.id === m.opp2)?.name || '';
-    return {
-      opponentDeck: `${opp1Name}/${opp2Name}`,
-      result: m.result === 'TIE' ? 'draw' : m.result.toLowerCase(),
-      notes: m.notes
-    };
-  });
+    const formattedMatches = matches.map(m => {
+      const opp1Name = pokemonList.find(p => p.id === m.opp1)?.name || '';
+      const opp2Name = pokemonList.find(p => p.id === m.opp2)?.name || '';
+      return {
+        opponentDeck: [opp1Name, opp2Name].filter(Boolean).join('/'),
+        result: m.result === 'TIE' ? 'draw' : m.result.toLowerCase(),
+        notes: m.notes
+      };
+    });
 
-  try {
-    setLoading(true); // 👈 START loader
+    try {
+      setLoading(true); // 👈 START loader
 
-    await onSave({ name, date, location, deckUsed, matches: formattedMatches });
+      await onSave({ name, date, location, deckUsed, matches: formattedMatches });
 
-    setSnackbar({ open: true, message: 'Torneo guardado exitosamente', severity: 'success' });
-  } catch (error) {
-    setSnackbar({ open: true, message: error.message || 'Error al guardar el torneo', severity: 'error' });
-  } finally {
-    setLoading(false); // 👈 STOP loader
-  }
-};
+      setSnackbar({ open: true, message: 'Torneo guardado exitosamente', severity: 'success' });
+    } catch (error) {
+      setSnackbar({ open: true, message: error.message || 'Error al guardar el torneo', severity: 'error' });
+    } finally {
+      setLoading(false); // 👈 STOP loader
+    }
+  };
 
 
 
@@ -145,28 +149,44 @@ export default function CreateTournament({ initialTournament = null, onSave }) {
 
   return (
     <Box sx={{ p: { xs: 2, sm: 3 }, pt: 4, maxWidth: '800px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'wrap', gap: 2 }}>
-        <Typography variant="h4" fontWeight="bold">
-          {initialTournament ? 'Modificar Torneo' : 'Nuevo Torneo'}
-        </Typography>
-        <Button
-  variant="contained"
-  color="secondary"
-  startIcon={
-    loading ? <CircularProgress size={20} color="inherit" /> : <Save />
-  }
-  onClick={handleSave}
-  disabled={loading}
-  sx={{ borderRadius: 8, px: 3 }}
->
-  {loading ? 'Guardando...' : 'Guardar'}
-</Button>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'nowrap', gap: 1, overflow: 'hidden' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
+          <IconButton onClick={() => {
+            if (window.history.length > 1) {
+              navigate(-1);
+            } else {
+              navigate('/');
+            }
+          }} sx={{ mr: 2 }}>
+            <ArrowBack />
+          </IconButton>
+          <Typography variant="h4" fontWeight="bold" sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {initialTournament ? 'Modificar Torneo' : 'Nuevo Torneo'}
+          </Typography>
+        </Box>
+
+        <ResponsiveIconButton
+          icon={<Save />}
+          label="Guardar"
+          onClick={handleSave}
+          loading={loading}
+          disabled={loading}
+          variant="contained"
+          colorStyles={{
+            color: blue[800],
+            borderColor: blue[800],
+            '&:hover': {
+              borderColor: blue[900],
+              backgroundColor: blue[50],
+            }
+          }}
+        />
       </Box>
 
       <Card sx={{ mb: 4, borderRadius: 3 }}>
         <CardContent>
           <Typography variant="h6" gutterBottom fontWeight="bold">Información General</Typography>
-          <Grid container spacing={3}>
+          <Grid container spacing={2}>
             <Grid item xs={12}>
               <TextField fullWidth label="Nombre del Torneo" value={name} onChange={e => setName(e.target.value)} />
             </Grid>

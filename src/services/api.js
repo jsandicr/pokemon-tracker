@@ -115,7 +115,13 @@ export const getPokemons = async () => {
   if (!response.ok) {
     throw new Error('Error al obtener pokémon');
   }
-  cachedPokemons = await response.json();
+  const data = await response.json();
+  const sapo = {
+    id: 'sapo',
+    name: 'Rogue Deck (Sapo)',
+    image: 'https://play.pokemonshowdown.com/sprites/gen5/substitute.png'
+  };
+  cachedPokemons = [sapo, ...data];
   return cachedPokemons;
 };
 

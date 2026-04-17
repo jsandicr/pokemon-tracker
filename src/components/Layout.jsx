@@ -153,7 +153,9 @@ const Layout = ({ children, toggleTheme, currentMode }) => {
       <Box
         sx={{
           flexGrow: 1,
-          display: 'flex', flexDirection: 'column'
+          display: 'flex', flexDirection: 'column',
+          width: '100%',
+          overflowX: 'hidden'
         }}>
 
         {/* Mobile Header / Top Bar */}

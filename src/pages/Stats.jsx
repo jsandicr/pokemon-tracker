@@ -93,17 +93,17 @@ const Stats = () => {
       script.id = 'paddle-js';
       script.src = 'https://cdn.paddle.com/paddle/v2/paddle.js';
       script.onload = () => {
-         if (window.Paddle) {
-            window.Paddle.Environment.set(import.meta.env.VITE_PADDLE_ENV || 'sandbox'); 
-            window.Paddle.Initialize({ 
-              token: import.meta.env.VITE_PADDLE_CLIENT_TOKEN || 'test_token' // Reemplazaremos esto en .env
-            });
-            setPaddleLoaded(true);
-         }
+        if (window.Paddle) {
+          window.Paddle.Environment.set(import.meta.env.VITE_PADDLE_ENV || 'sandbox');
+          window.Paddle.Initialize({
+            token: import.meta.env.VITE_PADDLE_CLIENT_TOKEN || 'test_token' // Reemplazaremos esto en .env
+          });
+          setPaddleLoaded(true);
+        }
       };
       document.body.appendChild(script);
     } else if (window.Paddle) {
-       setPaddleLoaded(true);
+      setPaddleLoaded(true);
     }
   }, [user]);
 
@@ -134,11 +134,11 @@ const Stats = () => {
           quantity: 1
         }],
         customData: {
-           userId: user?._id || user?.id
+          userId: user?._id || user?.id
         }
       });
     } else {
-       alert("Error: El sistema de pagos de Paddle aún se está cargando o tu bloqueador de anuncios lo impide.");
+      alert("Error: El sistema de pagos de Paddle aún se está cargando o tu bloqueador de anuncios lo impide.");
     }
   };
 
@@ -176,7 +176,7 @@ const Stats = () => {
         <Grid item xs={12} sm={4}><StatCard title="Partidas Totales" value={stats.totalMatches} color="secondary" /></Grid>
         <Grid item xs={12} sm={4}><StatCard title="Mejor Torneo" value={stats.bestResult} color="success" /></Grid>
       </Grid>
-      
+
       {isPremiumActive ? (
         <>
           {/* --- PREMIUM: Deck Performance --- */}
@@ -297,7 +297,30 @@ const Stats = () => {
         </>
       ) : (
         /* --- PREMIUM UPGRADE BANNER (ONLY IF NOT PREMIUM) --- */
-        <Card sx={{ mt: 2, borderRadius: 4, p: { xs: 3, md: 5 }, textAlign: 'center', background: 'linear-gradient(135deg, #f3f4f6 0%, #ffffff 100%)', border: '1px solid #e5e7eb' }}>
+        <Card sx={(theme) => ({
+          mt: 2,
+          borderRadius: 4,
+          p: { xs: 3, md: 5 },
+          textAlign: 'center',
+
+          // 🎯 Fondo adaptativo
+          background:
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'
+              : 'linear-gradient(135deg, #f3f4f6 0%, #ffffff 100%)',
+
+          // 🎯 Borde adaptativo
+          border: `1px solid ${theme.palette.mode === 'dark'
+              ? theme.palette.grey[800]
+              : theme.palette.grey[200]
+            }`,
+
+          // 🎯 Sombra más elegante en dark
+          boxShadow:
+            theme.palette.mode === 'dark'
+              ? '0 0 0 1px rgba(255,255,255,0.05)'
+              : 'none'
+        })}>
           <AutoAwesome sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
           <Typography variant="h5" fontWeight="bold" color="text.primary" gutterBottom>
             Desbloquea tu potencial completo
@@ -311,7 +334,7 @@ const Stats = () => {
           <Button variant="contained" size="large" onClick={handleCheckout} sx={{ borderRadius: 6, px: 5, py: 1.5, fontWeight: 'bold', fontSize: '1rem', mb: 3 }}>
             MEJORAR A PREMIUM MENSUAL
           </Button>
-          
+
           <Box display="flex" justifyContent="center" gap={3} flexWrap="wrap" sx={{ mt: 2 }}>
             <Link to="/pricing" style={{ color: '#6b7280', textDecoration: 'underline', fontSize: '0.8rem' }}>Precios</Link>
             <Link to="/terms" style={{ color: '#6b7280', textDecoration: 'underline', fontSize: '0.8rem' }}>Términos de Servicio</Link>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {
-  Box, Typography, TextField, OutlinedInput
+  Box, Typography, TextField, OutlinedInput,
+  Avatar
 } from '@mui/material';
 import { createPortal } from 'react-dom';
 
@@ -150,7 +151,14 @@ const PokemonSelect = ({ value, onChange, options, label, isMainDeck = false }) 
                       '&:hover': { bgcolor: 'action.hover' }
                     }}
                   >
-                    {p.image && <img src={p.image} alt={p.name} style={{ width: 32, height: 32, objectFit: 'contain' }} />}
+                    {p.image &&
+                      <Avatar
+                        src={p.image || undefined}
+                        sx={{ width: 32, height: 32 }}
+                      >
+                        {displayValue?.[0]}
+                      </Avatar>
+                    }
                     <Typography>{p.name}</Typography>
                   </Box>
                 ))

@@ -28,19 +28,19 @@ const Terms = () => {
         <Typography variant="body1" paragraph>
           Last updated: {new Date().toLocaleDateString()}
         </Typography>
-        
+
         <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
           1. Acceptance of Terms
         </Typography>
         <Typography variant="body1" paragraph>
-          By accessing and using Pokemon Tracker, you accept and agree to be bound by the terms and provision of this agreement.
+          By accessing and using Duel Tracker, you accept and agree to be bound by the terms and provision of this agreement.
         </Typography>
 
         <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
           2. Description of Service
         </Typography>
         <Typography variant="body1" paragraph>
-          Pokemon Tracker provides users with access to a rich collection of resources, including various communications tools, search services, and personalized content such as tournament tracking and data analysis.
+          Duel Tracker provides users with access to a rich collection of resources, including various communications tools, search services, and personalized content such as tournament tracking and data analysis.
         </Typography>
 
         <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>

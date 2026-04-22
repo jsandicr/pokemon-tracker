@@ -15,6 +15,11 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import About from './pages/About';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
+import Refund from './pages/Refund';
+import Pricing from './pages/Pricing';
 
 // AuthContext
 import { AuthProvider, AuthContext } from './context/AuthContext';
@@ -64,6 +69,12 @@ function App() {
             <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
             <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
 
+            {/* Public Legal & Info Pages (Accessible to Paddle without login) */}
+            <Route path="/terms" element={<Layout toggleTheme={colorMode.toggleColorMode} currentMode={mode}><Terms /></Layout>} />
+            <Route path="/privacy" element={<Layout toggleTheme={colorMode.toggleColorMode} currentMode={mode}><Privacy /></Layout>} />
+            <Route path="/refund" element={<Layout toggleTheme={colorMode.toggleColorMode} currentMode={mode}><Refund /></Layout>} />
+            <Route path="/pricing" element={<Layout toggleTheme={colorMode.toggleColorMode} currentMode={mode}><Pricing /></Layout>} />
+
             {/* Protected Routes enclosed in Layout */}
             <Route
               path="/*"
@@ -76,6 +87,7 @@ function App() {
                       <Route path="/stats" element={<Stats />} />
                       <Route path="/details/:id" element={<Details />} />
                       <Route path="/edit/:id" element={<EditTournament />} />
+                      <Route path="/about" element={<About />} />
                       <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
                   </Layout>

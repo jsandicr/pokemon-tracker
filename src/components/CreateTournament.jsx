@@ -51,6 +51,8 @@ export default function CreateTournament({ initialTournament = null, onSave }) {
         };
       });
       setMatches(formattedMatches);
+    } else {
+      setDate(new Date().toISOString().split('T')[0]);
     }
   }, [initialTournament, pokemonList]);
 
@@ -68,7 +70,7 @@ export default function CreateTournament({ initialTournament = null, onSave }) {
       }
     }
     setMatches([...matches, { opp1: '', opp2: '', result: '', notes: '' }]);
-    
+
     // Auto-scroll to the bottom specifically tailored for mobile
     setTimeout(() => {
       window.scrollTo({

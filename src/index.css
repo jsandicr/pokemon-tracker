@@ -19,6 +19,12 @@ body {
   overflow-x: hidden;
 }
 
+/* Oculta el botón nativo de mostrar contraseña en Edge/Chrome */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
+
 #root {
   width: 100%;
 }

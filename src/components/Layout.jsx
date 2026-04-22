@@ -6,7 +6,8 @@ import {
 } from '@mui/material';
 import {
   Home as HomeIcon, AddCircle as AddIcon, BarChart as StatsIcon,
-  Menu as MenuIcon, LightMode, DarkMode
+  Menu as MenuIcon, LightMode, DarkMode,
+  Instagram as InstagramIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
@@ -134,6 +135,15 @@ const Layout = ({ children, toggleTheme, currentMode }) => {
         }}
       >
         Cerrar Sesión
+      </Button>
+
+      <Button
+        variant="text"
+        size="small"
+        onClick={() => handleNavigate('/about')}
+        sx={{ mt: 1, color: 'text.secondary', textTransform: 'none', fontSize: '0.75rem' }}
+      >
+        Acerca de
       </Button>
     </Box>
   );

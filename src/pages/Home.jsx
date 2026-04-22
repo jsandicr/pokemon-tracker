@@ -50,6 +50,9 @@ const Home = () => {
             date: new Date(t.date).toLocaleDateString(),
             location: t.location,
             deck: matchedPokemon,
+            wins: t.results?.wins || 0,
+            losses: t.results?.losses || 0,
+            draws: t.results?.draws || 0,
             result: `${t.results?.wins || 0}W - ${t.results?.losses || 0}L - ${t.results?.draws || 0}T`,
           };
         });
@@ -62,6 +65,12 @@ const Home = () => {
     };
     fetchTournaments();
   }, []);
+
+  const getResultColor = (wins, losses) => {
+    if (wins > losses) return 'success';
+    if (losses > wins) return 'secondary';
+    return 'warning';
+  };
 
   return (
     <Box sx={{ p: 3, pt: { xs: 2, md: 4 }, maxWidth: '800px', margin: '0 auto', width: '100%' }}>
@@ -104,7 +113,7 @@ const Home = () => {
                   </Box>
                   <Chip
                     label={tournament.result}
-                    color="secondary"
+                    color={getResultColor(tournament.wins, tournament.losses)}
                     variant="filled"
                     sx={{ fontWeight: 'bold' }}
                   />

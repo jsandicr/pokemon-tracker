@@ -66,6 +66,9 @@ const Details = () => {
         rawDate: data.date,
         location: data.location,
         deck: deck,
+        wins: data.results?.wins || 0,
+        losses: data.results?.losses || 0,
+        draws: data.results?.draws || 0,
         result: `${data.results?.wins || 0}W - ${data.results?.losses || 0}L - ${data.results?.draws || 0}T`,
         matches: mappedMatches
       });
@@ -79,6 +82,12 @@ const Details = () => {
   useEffect(() => {
     fetchData();
   }, [id]);
+
+  const getResultColor = (wins, losses) => {
+    if (wins > losses) return 'success';
+    if (losses > wins) return 'secondary';
+    return 'warning';
+  };
 
   const handleDelete = async () => {
     try {
@@ -288,7 +297,7 @@ const Details = () => {
           <Box display="flex" gap={1} mb={2}>
             <Chip label={tournament.date} size="small" variant="outlined" />
             <Chip label={tournament.location} size="small" variant="outlined" />
-            <Chip label={tournament.result} size="small" color="primary" sx={{ fontWeight: 'bold' }} />
+            <Chip label={tournament.result} size="small" color={getResultColor(tournament.wins, tournament.losses)} sx={{ fontWeight: 'bold' }} />
           </Box>
 
           <Divider sx={{ my: 3 }} />

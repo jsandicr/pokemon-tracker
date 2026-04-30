@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Box, Typography, Card, CardContent, Divider, Button,
   AvatarGroup, Avatar, IconButton, Chip,
@@ -12,23 +12,25 @@ import {
 } from '@mui/material';
 import { yellow, red, blue } from '@mui/material/colors';
 import { ArrowBack, Edit, Add } from '@mui/icons-material';
-import { getTournamentById, deleteTournament, getPokemons, updateTournament } from '../services/api';
+import { getTournamentById, deleteTournament, updateTournament } from '../services/api';
 import PokemonSelect from '../components/PokemonSelect';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { Save, Trash2 } from 'lucide-react';
 import ResponsiveIconButton from '../components/ResponsiveButton';
+import { PokemonContext } from '../context/PokemonContext';
 
 const Details = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { pokemons: contextPokemons, loading: contextPokemonsLoading } = useContext(PokemonContext);
 
   const [tournament, setTournament] = useState(null);
   useDocumentTitle(tournament ? tournament.name : 'Cargando...');
   const [loading, setLoading] = useState(true);
 
-  const [pokemons, setPokemons] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [newMatch, setNewMatch] = useState({ opp1: '', opp2: '', result: '', notes: '' });
   const [savingMatch, setSavingMatch] = useState(false);
@@ -36,21 +38,39 @@ const Details = () => {
   const [expandedMatchIndex, setExpandedMatchIndex] = useState(null);
   const [editMatch, setEditMatch] = useState({ opp1: '', opp2: '', result: '', notes: '' });
 
-  const fetchData = async () => {
-    try {
-      const [data, fetchedPokemons] = await Promise.all([
-        getTournamentById(id),
-        getPokemons()
-      ]);
-      setPokemons(fetchedPokemons);
+  const normalizeResult = (result) => {
+    if (!result) return '';
+    const upper = result.toUpperCase();
+    return upper === 'TIE' ? 'draw' : upper.toLowerCase();
+  };
 
-      const deckNames = data.deckUsed ? data.deckUsed.split('/') : [];
-      const deck = deckNames.map(n => fetchedPokemons.find(p => p.name === n.trim()) || { name: n.trim(), image: '' });
+  const processTournament = (data, contextPokemonsList) => {
+    const isFromHome = !data._id && data.id;
 
-      const mappedMatches = (data.matches || []).map(m => {
+    let deckNames = [];
+    let mappedMatches = [];
+
+    if (isFromHome) {
+      deckNames = data.deck ? data.deck.map(p => p.name).filter(Boolean) : [];
+
+      mappedMatches = (data.matches || []).map(m => {
+        const oppNames = typeof m.opponentDeck === 'string'
+          ? m.opponentDeck.split('/').filter(Boolean)
+          : [];
+        const oppDeck = oppNames.map(n => contextPokemonsList.find(p => p.name === n.trim()) || { name: n.trim(), image: '' });
+
+        return {
+          id: m.id,
+          opponentDeck: oppDeck,
+          result: m.result,
+          notes: m.notes
+        };
+      });
+    } else {
+      deckNames = data.deckUsed ? data.deckUsed.split('/') : [];
+      mappedMatches = (data.matches || []).map(m => {
         const oppNames = m.opponentDeck ? m.opponentDeck.split('/') : [];
-        const oppDeck = oppNames.map(n => fetchedPokemons.find(p => p.name === n.trim()) || { name: n.trim(), image: '' });
-
+        const oppDeck = oppNames.map(n => contextPokemonsList.find(p => p.name === n.trim()) || { name: n.trim(), image: '' });
         return {
           id: m._id,
           opponentDeck: oppDeck,
@@ -58,20 +78,53 @@ const Details = () => {
           notes: m.notes
         };
       });
+    }
 
-      setTournament({
-        id: data._id,
-        name: data.name,
-        date: new Date(data.date).toLocaleDateString(),
-        rawDate: data.date,
-        location: data.location,
-        deck: deck,
-        wins: data.results?.wins || 0,
-        losses: data.results?.losses || 0,
-        draws: data.results?.draws || 0,
-        result: `${data.results?.wins || 0}W - ${data.results?.losses || 0}L - ${data.results?.draws || 0}T`,
-        matches: mappedMatches
-      });
+    let displayDate = '';
+    let storeDate = '';
+
+    if (data.date || data.rawDate) {
+      const dateValue = data.rawDate || data.date;
+      try {
+        const datePart = dateValue.split('T')[0];
+        const dateObj = new Date(datePart + 'T12:00:00');
+        if (!isNaN(dateObj.getTime())) {
+          displayDate = dateObj.toLocaleDateString();
+          storeDate = dateObj.toISOString();
+        } else {
+          displayDate = dateValue;
+          storeDate = dateValue;
+        }
+      } catch {
+        displayDate = dateValue;
+        storeDate = dateValue;
+      }
+    } else {
+      displayDate = new Date().toLocaleDateString();
+      storeDate = new Date().toISOString();
+    }
+
+    const deck = deckNames.map(n => contextPokemonsList.find(p => p.name === n.trim()) || { name: n.trim(), image: '' });
+
+    setTournament({
+      id: data._id || data.id,
+      name: data.name,
+      date: displayDate,
+      rawDate: storeDate,
+      location: data.location,
+      deck: deck,
+      wins: data.wins || data.results?.wins || 0,
+      losses: data.losses || data.results?.losses || 0,
+      draws: data.draws || data.results?.draws || 0,
+      result: data.result || `${data.wins || data.results?.wins || 0}W - ${data.losses || data.results?.losses || 0}L - ${data.draws || data.results?.draws || 0}T`,
+      matches: mappedMatches
+    });
+  };
+
+  const fetchData = async () => {
+    try {
+      const data = await getTournamentById(id);
+      processTournament(data, contextPokemons);
     } catch (error) {
       console.error("Error fetching tournament:", error);
     } finally {
@@ -80,8 +133,22 @@ const Details = () => {
   };
 
   useEffect(() => {
-    fetchData();
-  }, [id]);
+    const passedTournament = location.state?.tournament;
+
+    if (passedTournament) {
+      const pokemonsToUse = contextPokemons.length > 0 ? contextPokemons : [];
+      processTournament(passedTournament, pokemonsToUse);
+      setLoading(false);
+    } else if (!contextPokemonsLoading && contextPokemons.length > 0) {
+      fetchData();
+    }
+  }, [id, contextPokemonsLoading, contextPokemons.length]);
+
+  useEffect(() => {
+    if (!location.state?.tournament && !contextPokemonsLoading && contextPokemons.length > 0 && loading) {
+      fetchData();
+    }
+  }, [contextPokemonsLoading]);
 
   const getResultColor = (wins, losses) => {
     if (wins > losses) return 'success';
@@ -104,7 +171,7 @@ const Details = () => {
         if (idx === indexToRemove) return null;
         return {
           opponentDeck: m.opponentDeck.map(p => p.name).filter(Boolean).join('/'),
-          result: m.result === 'TIE' ? 'draw' : m.result.toLowerCase(),
+          result: normalizeResult(m.result),
           notes: m.notes || ''
         };
       }).filter(Boolean);
@@ -134,21 +201,38 @@ const Details = () => {
       return;
     }
 
+    const originalMatch = tournament.matches[indexToUpdate];
+    const newOpp1Name = contextPokemons.find(p => p.id === editMatch.opp1)?.name || '';
+    const newOpp2Name = contextPokemons.find(p => p.id === editMatch.opp2)?.name || '';
+    const newResult = normalizeResult(editMatch.result);
+    const newNotes = editMatch.notes || '';
+
+    const origOpp1Name = originalMatch.opponentDeck[0]?.name || '';
+    const origOpp2Name = originalMatch.opponentDeck[1]?.name || '';
+    const origResult = normalizeResult(originalMatch.result);
+    const origNotes = originalMatch.notes || '';
+
+    if (newOpp1Name === origOpp1Name &&
+        newOpp2Name === origOpp2Name &&
+        newResult === origResult &&
+        newNotes === origNotes) {
+      setExpandedMatchIndex(null);
+      return;
+    }
+
     setSavingMatch(true);
     try {
       const currentMatchesForApi = tournament.matches.map((m, idx) => {
         if (idx === indexToUpdate) {
-          const opp1Name = pokemons.find(p => p.id === editMatch.opp1)?.name || '';
-          const opp2Name = pokemons.find(p => p.id === editMatch.opp2)?.name || '';
           return {
-            opponentDeck: [opp1Name, opp2Name].filter(Boolean).join('/'),
-            result: editMatch.result === 'TIE' ? 'draw' : editMatch.result.toLowerCase(),
-            notes: editMatch.notes || ''
+            opponentDeck: [newOpp1Name, newOpp2Name].filter(Boolean).join('/'),
+            result: newResult,
+            notes: newNotes
           };
         }
         return {
           opponentDeck: m.opponentDeck.map(p => p.name).filter(Boolean).join('/'),
-          result: m.result === 'TIE' ? 'draw' : m.result.toLowerCase(),
+          result: normalizeResult(m.result),
           notes: m.notes || ''
         };
       });
@@ -184,15 +268,15 @@ const Details = () => {
     try {
       const currentMatchesForApi = tournament.matches.map(m => ({
         opponentDeck: m.opponentDeck.map(p => p.name).filter(Boolean).join('/'),
-        result: m.result === 'TIE' ? 'draw' : m.result.toLowerCase(),
+        result: normalizeResult(m.result),
         notes: m.notes || ''
       }));
 
-      const opp1Name = pokemons.find(p => p.id === newMatch.opp1)?.name || '';
-      const opp2Name = pokemons.find(p => p.id === newMatch.opp2)?.name || '';
+      const opp1Name = contextPokemons.find(p => p.id === newMatch.opp1)?.name || '';
+      const opp2Name = contextPokemons.find(p => p.id === newMatch.opp2)?.name || '';
       const newMatchForApi = {
         opponentDeck: [opp1Name, opp2Name].filter(Boolean).join('/'),
-        result: newMatch.result === 'TIE' ? 'draw' : newMatch.result.toLowerCase(),
+        result: normalizeResult(newMatch.result),
         notes: newMatch.notes || ''
       };
 
@@ -258,7 +342,7 @@ const Details = () => {
           <ResponsiveIconButton
             icon={<Edit />}
             label="Modificar"
-            onClick={() => navigate(`/edit/${tournament.id}`)}
+            onClick={() => navigate(`/edit/${tournament.id}`, { state: { tournament: { ...tournament, originalData: tournament } } })}
             colorStyles={{
               color: yellow[800],
               borderColor: yellow[800],
@@ -350,8 +434,8 @@ const Details = () => {
                   const opp1 = match.opponentDeck[0];
                   const opp2 = match.opponentDeck[1];
                   setEditMatch({
-                    opp1: (opp1 && opp1.id) || (opp1 && pokemons.find(p => p.name === opp1?.name)?.id) || '',
-                    opp2: (opp2 && opp2.id) || (opp2 && pokemons.find(p => p.name === opp2?.name)?.id) || '',
+                    opp1: (opp1 && opp1.id) || (opp1 && contextPokemons.find(p => p.name === opp1?.name)?.id) || '',
+                    opp2: (opp2 && opp2.id) || (opp2 && contextPokemons.find(p => p.name === opp2?.name)?.id) || '',
                     result: match.result || '',
                     notes: match.notes || ''
                   });
@@ -394,7 +478,7 @@ const Details = () => {
                                 label="Pokémon Rival 1"
                                 value={editMatch.opp1}
                                 onChange={(val) => setEditMatch(prev => ({ ...prev, opp1: val }))}
-                                options={pokemons}
+                                options={contextPokemons}
                                 isMainDeck={false}
                               />
                             </Grid>
@@ -403,7 +487,7 @@ const Details = () => {
                                 label="Pokémon Rival 2"
                                 value={editMatch.opp2}
                                 onChange={(val) => setEditMatch(prev => ({ ...prev, opp2: val }))}
-                                options={pokemons}
+                                options={contextPokemons}
                                 isMainDeck={false}
                               />
                             </Grid>
@@ -426,19 +510,6 @@ const Details = () => {
                           </Grid>
                           <Box display="flex" gap={1.5} mt={1}>
                             <ResponsiveIconButton
-                              icon={<Trash2 size={18} />}
-                              label="Eliminar"
-                              onClick={(e) => { e.stopPropagation(); handleDeleteMatch(idx); }}
-                              colorStyles={{
-                                color: red[800],
-                                borderColor: red[800],
-                                '&:hover': {
-                                  borderColor: red[900],
-                                  backgroundColor: red[50],
-                                }
-                              }}
-                            />
-                            <ResponsiveIconButton
                               icon={<Save size={18} />}
                               label="Guardar"
                               onClick={(e) => { e.stopPropagation(); handleUpdateMatch(idx); }}
@@ -448,6 +519,19 @@ const Details = () => {
                                 '&:hover': {
                                   borderColor: blue[900],
                                   backgroundColor: blue[50],
+                                }
+                              }}
+                            />
+                            <ResponsiveIconButton
+                              icon={<Trash2 size={18} />}
+                              label="Eliminar"
+                              onClick={(e) => { e.stopPropagation(); handleDeleteMatch(idx); }}
+                              colorStyles={{
+                                color: red[800],
+                                borderColor: red[800],
+                                '&:hover': {
+                                  borderColor: red[900],
+                                  backgroundColor: red[50],
                                 }
                               }}
                             />
@@ -472,7 +556,7 @@ const Details = () => {
                 label="Pokémon Rival 1"
                 value={newMatch.opp1}
                 onChange={(val) => setNewMatch(prev => ({ ...prev, opp1: val }))}
-                options={pokemons}
+                options={contextPokemons}
                 isMainDeck={false}
               />
             </Grid>
@@ -481,7 +565,7 @@ const Details = () => {
                 label="Pokémon Rival 2"
                 value={newMatch.opp2}
                 onChange={(val) => setNewMatch(prev => ({ ...prev, opp2: val }))}
-                options={pokemons}
+                options={contextPokemons}
                 isMainDeck={false}
               />
             </Grid>

@@ -1,15 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import {
   Box, Typography, Card, CardContent, Avatar,
   AvatarGroup, styled, useTheme, Chip,
   useMediaQuery
 } from '@mui/material';
-import { getTournaments, getPokemons } from '../services/api';
+import { getTournaments } from '../services/api';
 import { Add, Add as AddIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import ResponsiveIconButton from '../components/ResponsiveButton';
 import { blue } from '@mui/material/colors';
+import { PokemonContext } from '../context/PokemonContext';
 
 const PremiumCard = styled(Card)(({ theme }) => ({
   marginBottom: theme.spacing(2),
@@ -29,28 +30,37 @@ const Home = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { pokemons: contextPokemons, loading: pokemonsLoading } = useContext(PokemonContext);
   useDocumentTitle('Home');
 
   const [tournaments, setTournaments] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (pokemonsLoading) return;
+
     const fetchTournaments = async () => {
       try {
-        const [data, pokemonList] = await Promise.all([
-          getTournaments(),
-          getPokemons()
-        ]);
+        const data = await getTournaments();
         const mappedData = data.map(t => {
           const names = t.deckUsed ? t.deckUsed.split('/') : [];
-          const matchedPokemon = names.map(n => pokemonList.find(p => p.name === n.trim()) || { name: n.trim(), image: '' });
+          const matchedPokemon = names.map(n => contextPokemons.find(p => p.name === n.trim()) || { name: n.trim(), image: '' });
+
+          const mappedMatches = (t.matches || []).map(m => ({
+            id: m._id,
+            opponentDeck: m.opponentDeck,
+            result: m.result === 'draw' ? 'TIE' : m.result.toUpperCase(),
+            notes: m.notes
+          }));
 
           return {
             id: t._id,
             name: t.name,
-            date: new Date(t.date).toLocaleDateString(),
+            date: t.date ? new Date(t.date.split('T')[0] + 'T12:00:00').toLocaleDateString() : '',
+            rawDate: t.date,
             location: t.location,
             deck: matchedPokemon,
+            matches: mappedMatches,
             wins: t.results?.wins || 0,
             losses: t.results?.losses || 0,
             draws: t.results?.draws || 0,
@@ -65,7 +75,7 @@ const Home = () => {
       }
     };
     fetchTournaments();
-  }, []);
+  }, [contextPokemons, pokemonsLoading]);
 
   const getResultColor = (wins, losses) => {
     if (wins > losses) return 'success';
@@ -101,7 +111,7 @@ const Home = () => {
           <Typography textAlign="center" color="text.secondary">Aún no hay torneos registrados.</Typography>
         ) : (
           tournaments.map((tournament) => (
-            <PremiumCard key={tournament.id} onClick={() => navigate(`/details/${tournament.id}`)}>
+            <PremiumCard key={tournament.id} onClick={() => navigate(`/details/${tournament.id}`, { state: { tournament } })}>
               <CardContent sx={{ pb: '16px !important', position: 'relative' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <Box>
@@ -121,9 +131,6 @@ const Home = () => {
                 </Box>
 
                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 3 }}>
-                  <Typography variant="body2" color="text.secondary" sx={{ mr: 2, fontWeight: 500 }}>
-                    Deck:
-                  </Typography>
                   <AvatarGroup max={4} sx={{ '& .MuiAvatar-root': { bgcolor: 'transparent' } }}>
                     {tournament.deck.map((pokemon, idx) => (
                       <Avatar

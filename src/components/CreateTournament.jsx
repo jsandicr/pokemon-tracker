@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { getPokemons } from '../services/api';
+import { useState, useEffect, useContext } from 'react';
 import {
   Box, Typography, TextField, Button, Card,
   CardContent, Divider, IconButton, Grid,
@@ -12,9 +11,11 @@ import PokemonSelect from './PokemonSelect';
 import { useNavigate } from 'react-router-dom';
 import ResponsiveIconButton from './ResponsiveButton';
 import { blue } from '@mui/material/colors';
+import { PokemonContext } from '../context/PokemonContext';
 
 export default function CreateTournament({ initialTournament = null, onSave }) {
   const navigate = useNavigate();
+  const { pokemons: contextPokemons, loading: pokemonsLoading } = useContext(PokemonContext);
   // State variables
   const [name, setName] = useState('');
   const [date, setDate] = useState('');
@@ -22,43 +23,50 @@ export default function CreateTournament({ initialTournament = null, onSave }) {
   const [deck, setDeck] = useState(['', '']); // stores Pokemon IDs
   const [matches, setMatches] = useState([]);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'error' });
-  const [pokemonList, setPokemonList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  useEffect(() => {
-    getPokemons().then(setPokemonList).catch(console.error);
-  }, []);
+  const pokemonList = contextPokemons;
 
   // Populate state when editing an existing tournament
   useEffect(() => {
+    if (pokemonsLoading) return;
+
     if (initialTournament && pokemonList.length > 0) {
       setName(initialTournament.name || '');
       setDate(initialTournament.date || '');
       setLocation(initialTournament.location || '');
-      // deckUsed is stored as "Name1/Name2"; we need to convert back to IDs using list
-      const deckNames = (initialTournament.deckUsed || '').split('/');
+      const deckNames = Array.isArray(initialTournament.deck)
+        ? initialTournament.deck.map(p => p.name)
+        : (initialTournament.deckUsed || '').split('/');
       const deckIds = deckNames.map(n => pokemonList.find(p => p.name === n)?.id || '');
       setDeck(deckIds);
-      // matches from API use opponentDeck as "Name1/Name2" and result as "win"/"loss"/"draw"
       const formattedMatches = (initialTournament.matches || []).map(m => {
-        const oppNames = (m.opponentDeck || '').split('/');
+        const oppNames = Array.isArray(m.opponentDeck)
+          ? m.opponentDeck.map(p => p.name)
+          : (m.opponentDeck || '').split('/');
+        
+        const resultValue = m.result;
+        const normalizedResult = resultValue === 'WIN' || resultValue === 'LOSS' || resultValue === 'TIE'
+          ? resultValue
+          : (resultValue === 'draw' ? 'TIE' : resultValue?.toUpperCase() || '');
+        
         const oppIds = oppNames.map(n => pokemonList.find(p => p.name === n)?.id || '');
         return {
           opp1: oppIds[0] || '',
           opp2: oppIds[1] || '',
-          result: m.result === 'draw' ? 'TIE' : m.result.toUpperCase(),
+          result: normalizedResult,
           notes: m.notes || ''
         };
       });
       setMatches(formattedMatches);
       setIsLoaded(true);
-    } else {
+    } else if (!initialTournament) {
       setDate(new Date().toISOString().split('T')[0]);
     }
-  }, [initialTournament, pokemonList]);
+  }, [initialTournament, pokemonList, pokemonsLoading]);
 
   const handleCloseSnackbar = (event, reason) => {
     if (reason === 'clickaway') return;
@@ -127,7 +135,7 @@ const checkForChanges = () => {
       const original = initialTournament.matches[i];
 
       const localResult = local.result === 'TIE' ? 'draw' : local.result.toLowerCase();
-      const originalResult = original.result;
+      const originalResult = original.result === 'TIE' ? 'draw' : original.result.toLowerCase();
 
       if (localResult !== originalResult) return true;
       if ((local.notes || '') !== (original.notes || '')) return true;

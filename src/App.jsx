@@ -23,6 +23,8 @@ import Pricing from './pages/Pricing';
 
 // AuthContext
 import { AuthProvider, AuthContext } from './context/AuthContext';
+// PokemonContext
+import { PokemonProvider } from './context/PokemonContext';
 import VerifyCode from './pages/VerifyCode';
 
 const ProtectedRoute = ({ children }) => {
@@ -58,7 +60,8 @@ function App() {
     <ThemeProvider theme={activeTheme}>
       <CssBaseline />
       <AuthProvider>
-        <BrowserRouter>
+        <PokemonProvider>
+          <BrowserRouter>
           <ScrollToTop />
           <Routes>
             {/* Public Routes (Login/Register do not use standard Layout or maybe they do?)
@@ -97,6 +100,7 @@ function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
+        </PokemonProvider>
       </AuthProvider>
     </ThemeProvider>
   );

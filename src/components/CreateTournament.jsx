@@ -3,15 +3,15 @@ import { getPokemons } from '../services/api';
 import {
   Box, Typography, TextField, Button, Card,
   CardContent, Divider, IconButton, Grid,
-  useTheme, Paper, Snackbar, Alert
+  useTheme, Paper, Snackbar, Alert,
+  useMediaQuery
 } from '@mui/material';
 import { Save, Add, Delete, ArrowBack } from '@mui/icons-material';
-import { CircularProgress } from '@mui/material';
 
 import PokemonSelect from './PokemonSelect';
 import { useNavigate } from 'react-router-dom';
 import ResponsiveIconButton from './ResponsiveButton';
-import { blue, yellow } from '@mui/material/colors';
+import { blue } from '@mui/material/colors';
 
 export default function CreateTournament({ initialTournament = null, onSave }) {
   const navigate = useNavigate();
@@ -24,6 +24,9 @@ export default function CreateTournament({ initialTournament = null, onSave }) {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'error' });
   const [pokemonList, setPokemonList] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   useEffect(() => {
     getPokemons().then(setPokemonList).catch(console.error);
@@ -51,6 +54,7 @@ export default function CreateTournament({ initialTournament = null, onSave }) {
         };
       });
       setMatches(formattedMatches);
+      setIsLoaded(true);
     } else {
       setDate(new Date().toISOString().split('T')[0]);
     }
@@ -92,8 +96,58 @@ export default function CreateTournament({ initialTournament = null, onSave }) {
     setMatches(newMatches);
   };
 
+  const convertDeckToString = (deckIds) => {
+    const names = deckIds.map(id => pokemonList.find(p => p.id === id)?.name || '').filter(Boolean);
+    return names.join('/');
+  };
+
+  const convertMatchesToApiFormat = (matchList) => {
+    return matchList.map(m => {
+      const opp1Name = pokemonList.find(p => p.id === m.opp1)?.name || '';
+      const opp2Name = pokemonList.find(p => p.id === m.opp2)?.name || '';
+      return {
+        opponentDeck: [opp1Name, opp2Name].filter(Boolean).join('/'),
+        result: m.result === 'TIE' ? 'draw' : m.result.toLowerCase(),
+        notes: m.notes
+      };
+    });
+  };
+
+const checkForChanges = () => {
+    if (!initialTournament) return true;
+    if (!isLoaded) return true;
+
+    const deckUsed = convertDeckToString(deck);
+    if (deckUsed !== (initialTournament.deckUsed || '')) return true;
+
+    if (matches.length !== (initialTournament.matches || []).length) return true;
+
+    for (let i = 0; i < matches.length; i++) {
+      const local = matches[i];
+      const original = initialTournament.matches[i];
+
+      const localResult = local.result === 'TIE' ? 'draw' : local.result.toLowerCase();
+      const originalResult = original.result;
+
+      if (localResult !== originalResult) return true;
+      if ((local.notes || '') !== (original.notes || '')) return true;
+    }
+
+    if (name !== (initialTournament.name || '')) return true;
+    if (date !== (initialTournament.date || '')) return true;
+    if (location !== (initialTournament.location || '')) return true;
+
+    return false;
+  };
+
   const handleSave = async () => {
-    if (loading) return; // evita doble click
+    if (loading) return;
+
+    if (!checkForChanges()) {
+      setSnackbar({ open: true, message: 'Torneo guardado exitosamente', severity: 'success' });
+      await onSave({ name, date, location, deckUsed: convertDeckToString(deck), matches: convertMatchesToApiFormat(matches) }, true);
+      return;
+    }
 
     // Validaciones...
     if (!name || !date || !location) {
@@ -111,30 +165,19 @@ export default function CreateTournament({ initialTournament = null, onSave }) {
       return;
     }
 
-    const deck1Name = pokemonList.find(p => p.id === deck[0])?.name || '';
-    const deck2Name = pokemonList.find(p => p.id === deck[1])?.name || '';
-    const deckUsed = [deck1Name, deck2Name].filter(Boolean).join('/');
+    setSnackbar({ open: true, message: 'Torneo guardado exitosamente', severity: 'success' });
 
-    const formattedMatches = matches.map(m => {
-      const opp1Name = pokemonList.find(p => p.id === m.opp1)?.name || '';
-      const opp2Name = pokemonList.find(p => p.id === m.opp2)?.name || '';
-      return {
-        opponentDeck: [opp1Name, opp2Name].filter(Boolean).join('/'),
-        result: m.result === 'TIE' ? 'draw' : m.result.toLowerCase(),
-        notes: m.notes
-      };
-    });
+    const deckUsed = convertDeckToString(deck);
+    const formattedMatches = convertMatchesToApiFormat(matches);
 
     try {
-      setLoading(true); // 👈 START loader
+      setLoading(true);
 
       await onSave({ name, date, location, deckUsed, matches: formattedMatches });
-
-      setSnackbar({ open: true, message: 'Torneo guardado exitosamente', severity: 'success' });
     } catch (error) {
       setSnackbar({ open: true, message: error.message || 'Error al guardar el torneo', severity: 'error' });
     } finally {
-      setLoading(false); // 👈 STOP loader
+      setLoading(false);
     }
   };
 
@@ -170,7 +213,7 @@ export default function CreateTournament({ initialTournament = null, onSave }) {
           }} sx={{ mr: 2 }}>
             <ArrowBack />
           </IconButton>
-          <Typography variant="h4" fontWeight="bold" sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <Typography variant='h6' fontWeight={700} sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {initialTournament ? 'Modificar Torneo' : 'Nuevo Torneo'}
           </Typography>
         </Box>
@@ -240,7 +283,7 @@ export default function CreateTournament({ initialTournament = null, onSave }) {
       </Card>
 
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h5" fontWeight="bold">Enfrentamientos</Typography>
+        <Typography variant="h6" fontWeight={700}>Enfrentamientos</Typography>
         <Button startIcon={<Add />} variant="outlined" onClick={addMatch} sx={{ borderRadius: 4 }}>
           Añadir Ronda
         </Button>

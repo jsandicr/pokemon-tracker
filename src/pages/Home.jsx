@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import {
   Box, Typography, Card, CardContent, Avatar,
-  AvatarGroup, Button, styled, useTheme, Chip
+  AvatarGroup, styled, useTheme, Chip,
+  useMediaQuery
 } from '@mui/material';
 import { getTournaments, getPokemons } from '../services/api';
 import { Add, Add as AddIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import ResponsiveIconButton from '../components/ResponsiveButton';
-import { Save, Trash2 } from 'lucide-react';
 import { blue } from '@mui/material/colors';
 
 const PremiumCard = styled(Card)(({ theme }) => ({
@@ -28,6 +28,7 @@ const PremiumCard = styled(Card)(({ theme }) => ({
 const Home = () => {
   const navigate = useNavigate();
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   useDocumentTitle('Home');
 
   const [tournaments, setTournaments] = useState([]);
@@ -75,11 +76,11 @@ const Home = () => {
   return (
     <Box sx={{ p: 3, pt: { xs: 2, md: 4 }, maxWidth: '800px', margin: '0 auto', width: '100%' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4" fontWeight="bold">
+        <Typography variant={isMobile ? "h5" : "h4"} fontWeight={isMobile ? 700 : 'bold'}>
           Mis Torneos
         </Typography>
         <ResponsiveIconButton
-          icon={<Add size={18} />}
+          icon={<Add size={isMobile ? 14 : 18} />}
           label="Nuevo Torneo"
           onClick={() => navigate('/new')}
           colorStyles={{

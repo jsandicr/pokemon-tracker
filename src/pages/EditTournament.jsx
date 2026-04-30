@@ -37,13 +37,15 @@ export default function EditTournament() {
     fetchTournament();
   }, [id]);
 
-  const handleSave = async (updatedData) => {
+  const handleSave = async (updatedData, isUnchanged = false) => {
     try {
-      await updateTournament(id, updatedData);
+      if (!isUnchanged) {
+        await updateTournament(id, updatedData);
+      }
       navigate(-1); // Go back to where we were (details screen or home)
     } catch (error) {
       console.error('Error updating tournament:', error);
-      throw error; // Let CreateTournament handle displaying the error snackbar
+      throw error;
     }
   };
 

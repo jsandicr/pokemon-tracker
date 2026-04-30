@@ -239,7 +239,7 @@ const Details = () => {
   }
 
   return (
-    <Box sx={{ p: 2, pt: 4, maxWidth: '800px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
+    <Box sx={{ p: 2, pt: { sm: 2, lg: 4 }, maxWidth: '800px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 1, flexWrap: 'nowrap', overflow: 'hidden' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
           <IconButton onClick={() => {
@@ -252,9 +252,6 @@ const Details = () => {
             sx={{ mr: 2 }}>
             <ArrowBack />
           </IconButton>
-          <Typography variant="h5" fontWeight="bold" sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            Detalle de Torneo
-          </Typography>
         </Box>
         <Box flexGrow={1} />
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
@@ -290,7 +287,7 @@ const Details = () => {
 
       <Card sx={{ mb: 4, borderRadius: 3, boxShadow: '0 8px 32px 0 rgba(0,0,0,0.1)' }}>
         <CardContent sx={{ position: 'relative' }}>
-          <Typography variant="h4" fontWeight="bold" gutterBottom>
+          <Typography variant="h4" fontWeight={isMobile ? 600 : "bold"} gutterBottom>
             {tournament.name}
           </Typography>
 
@@ -302,12 +299,11 @@ const Details = () => {
 
           <Divider sx={{ my: 3 }} />
 
-          <Typography variant="h6" fontWeight="bold" mb={2}>Mi Deck</Typography>
           <Box display="flex" gap={2} flexWrap="wrap" justifyContent="flex-start">
             {tournament.deck.map((p, idx) => (
               <Box key={idx} textAlign="center" sx={{ minWidth: '80px' }}>
-                <Avatar src={p.image} sx={{ width: 64, height: 64, mb: 1, bgcolor: 'background.default' }} />
-                <Typography variant="body2" fontWeight="bold">{p.name}</Typography>
+                <Avatar src={p.image} sx={{ width: 50, height: 50, mb: 1, bgcolor: 'background.default' }} />
+                <Typography variant="body2" fontWeight="bold" fontSize={13}>{p.name}</Typography>
               </Box>
             ))}
           </Box>
@@ -315,7 +311,7 @@ const Details = () => {
       </Card>
 
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h5" fontWeight="bold">Historial</Typography>
+        <Typography variant="h6" fontWeight={700}>Historial</Typography>
         <Button startIcon={<Add />} variant="outlined" onClick={() => setModalOpen(true)} sx={{ borderRadius: 4 }}>
           Agregar Ronda
         </Button>

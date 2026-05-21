@@ -43,12 +43,16 @@ const PublicRoute = ({ children }) => {
 };
 
 function App() {
-  const [mode, setMode] = useState('light');
+  const [mode, setMode] = useState(() => localStorage.getItem('appMode') || 'light');
 
   const colorMode = useMemo(
     () => ({
       toggleColorMode: () => {
-        setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
+        setMode((prevMode) => {
+          const next = prevMode === 'light' ? 'dark' : 'light';
+          localStorage.setItem('appMode', next);
+          return next;
+        });
       },
       mode
     }),

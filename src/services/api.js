@@ -1,8 +1,24 @@
 const API_URL = import.meta.env.VITE_API_URL + '/tournaments';
 const POKEMON_API_URL = import.meta.env.VITE_API_URL + '/pokemon';
 const AUTH_API_URL = import.meta.env.VITE_API_URL + '/auth';
+const FEEDBACK_API_URL = import.meta.env.VITE_API_URL + '/feedback';
 
 let cachedPokemons = null;
+
+const handleSessionExpired = () => {
+  localStorage.removeItem('user');
+  localStorage.removeItem('token');
+  window.dispatchEvent(new CustomEvent('auth:logout'));
+};
+
+const request = async (url, options = {}) => {
+  const response = await fetch(url, options);
+  if (response.status === 401) {
+    handleSessionExpired();
+    throw new Error('Sesión expirada');
+  }
+  return response;
+};
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');
@@ -97,7 +113,7 @@ export const resetPassword = async (data) => {
 };
 
 export const updateFavoritePokemon = async (pokemonId) => {
-  const response = await fetch(`${AUTH_API_URL}/favorite`, {
+  const response = await request(`${AUTH_API_URL}/favorite`, {
     method: 'PUT',
     headers: getAuthHeaders(),
     body: JSON.stringify({ favoritePokemon: pokemonId })
@@ -126,7 +142,7 @@ export const getPokemons = async () => {
 };
 
 export const getTournaments = async () => {
-  const response = await fetch(API_URL, { headers: getAuthHeaders() });
+  const response = await request(API_URL, { headers: getAuthHeaders() });
   if (!response.ok) {
     throw new Error('Error al obtener torneos');
   }
@@ -134,7 +150,7 @@ export const getTournaments = async () => {
 };
 
 export const getStatistics = async () => {
-  const response = await fetch(`${API_URL}/statistics`, { headers: getAuthHeaders() });
+  const response = await request(`${API_URL}/statistics`, { headers: getAuthHeaders() });
   if (!response.ok) {
     throw new Error('Error al obtener estadísticas');
   }
@@ -142,7 +158,7 @@ export const getStatistics = async () => {
 };
 
 export const getTournamentById = async (id) => {
-  const response = await fetch(`${API_URL}/${id}`, { headers: getAuthHeaders() });
+  const response = await request(`${API_URL}/${id}`, { headers: getAuthHeaders() });
   if (!response.ok) {
     throw new Error('Error al obtener el torneo');
   }
@@ -150,7 +166,7 @@ export const getTournamentById = async (id) => {
 };
 
 export const createTournament = async (tournamentData) => {
-  const response = await fetch(API_URL, {
+  const response = await request(API_URL, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify(tournamentData),
@@ -162,7 +178,7 @@ export const createTournament = async (tournamentData) => {
 };
 
 export const updateTournament = async (id, tournamentData) => {
-  const response = await fetch(`${API_URL}/${id}`, {
+  const response = await request(`${API_URL}/${id}`, {
     method: 'PUT',
     headers: getAuthHeaders(),
     body: JSON.stringify(tournamentData),
@@ -174,7 +190,7 @@ export const updateTournament = async (id, tournamentData) => {
 };
 
 export const deleteTournament = async (id) => {
-  const response = await fetch(`${API_URL}/${id}`, {
+  const response = await request(`${API_URL}/${id}`, {
     method: 'DELETE',
     headers: getAuthHeaders(),
   });
@@ -182,4 +198,22 @@ export const deleteTournament = async (id) => {
     throw new Error('Error al eliminar el torneo');
   }
   return response.json();
+};
+
+export const submitFeedback = async (email, message) => {
+  const response = await fetch(FEEDBACK_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, message })
+  });
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error('Error al conectar con el servidor');
+  }
+  if (!response.ok) {
+    throw new Error(data?.message || 'Error al enviar feedback');
+  }
+  return data;
 };

@@ -65,6 +65,7 @@ const Home = () => {
             losses: t.results?.losses || 0,
             draws: t.results?.draws || 0,
             result: `${t.results?.wins || 0}W - ${t.results?.losses || 0}L - ${t.results?.draws || 0}T`,
+            deckList: t.deckList || '',
           };
         });
         setTournaments(mappedData);

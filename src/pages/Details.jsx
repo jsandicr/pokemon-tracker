@@ -37,6 +37,7 @@ const Details = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const [expandedMatchIndex, setExpandedMatchIndex] = useState(null);
   const [editMatch, setEditMatch] = useState({ opp1: '', opp2: '', result: '', notes: '' });
+  const [showDeckList, setShowDeckList] = useState(false);
 
   const normalizeResult = (result) => {
     if (!result) return '';
@@ -113,6 +114,7 @@ const Details = () => {
       rawDate: storeDate,
       location: data.location,
       deck: deck,
+      deckList: data.deckList || '',
       wins: data.wins || data.results?.wins || 0,
       losses: data.losses || data.results?.losses || 0,
       draws: data.draws || data.results?.draws || 0,
@@ -183,6 +185,7 @@ const Details = () => {
         date: tournament.rawDate,
         location: tournament.location,
         deckUsed: deckNamesList,
+        deckList: tournament.deckList || '',
         matches: currentMatchesForApi
       };
 
@@ -244,6 +247,7 @@ const Details = () => {
         date: tournament.rawDate,
         location: tournament.location,
         deckUsed: deckNamesList,
+        deckList: tournament.deckList || '',
         matches: currentMatchesForApi
       };
 
@@ -287,6 +291,7 @@ const Details = () => {
         date: tournament.rawDate,
         location: tournament.location,
         deckUsed: deckNamesList,
+        deckList: tournament.deckList || '',
         matches: [...currentMatchesForApi, newMatchForApi]
       };
 
@@ -326,14 +331,7 @@ const Details = () => {
     <Box sx={{ p: 2, pt: { sm: 2, lg: 4 }, maxWidth: '800px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 1, flexWrap: 'nowrap', overflow: 'hidden' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
-          <IconButton onClick={() => {
-            if (window.history.length > 1) {
-              navigate(-1);
-            } else {
-              navigate('/');
-            }
-          }}
-            sx={{ mr: 2 }}>
+          <IconButton onClick={() => navigate('/')} sx={{ mr: 2 }}>
             <ArrowBack />
           </IconButton>
         </Box>
@@ -365,9 +363,8 @@ const Details = () => {
               }
             }}
           />
-        </Box>
-      </Box>
-
+              </Box>
+          </Box>
 
       <Card sx={{ mb: 4, borderRadius: 3, boxShadow: '0 8px 32px 0 rgba(0,0,0,0.1)' }}>
         <CardContent sx={{ position: 'relative' }}>
@@ -386,11 +383,44 @@ const Details = () => {
           <Box display="flex" gap={2} flexWrap="wrap" justifyContent="flex-start">
             {tournament.deck.map((p, idx) => (
               <Box key={idx} textAlign="center" sx={{ minWidth: '80px' }}>
-                <Avatar src={p.image} sx={{ width: 50, height: 50, mb: 1, bgcolor: 'background.default' }} />
-                <Typography variant="body2" fontWeight="bold" fontSize={13}>{p.name}</Typography>
+                <Avatar src={p.image} sx={{ mx: 'auto', width: 50, height: 50, mb: 1, bgcolor: 'background.default' }} />
+                <Typography variant="body2" fontWeight="bold" fontSize={13} sx={{ whiteSpace: 'pre-line' }}>
+                  {p.name.replace(' ', '\n')}
+                </Typography>
               </Box>
             ))}
           </Box>
+
+          {tournament.deckList && (
+            <Box sx={{ mt: 3 }}>
+              <Button
+                size="small"
+                variant="text"
+                onClick={() => setShowDeckList(!showDeckList)}
+                sx={{ textTransform: 'none', fontWeight: 'bold', mb: 1 }}
+              >
+                {showDeckList ? 'Ocultar lista' : 'Ver lista'}
+              </Button>
+              <Collapse in={showDeckList}>
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    p: 2,
+                    maxHeight: 250,
+                    overflow: 'auto',
+                    borderRadius: 2,
+                    bgcolor: 'grey.50',
+                    whiteSpace: 'pre-wrap',
+                    fontFamily: 'monospace',
+                    fontSize: '0.85rem',
+                    lineHeight: 1.6
+                  }}
+                >
+                  {tournament.deckList}
+                </Paper>
+              </Collapse>
+            </Box>
+          )}
         </CardContent>
       </Card>
 

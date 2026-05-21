@@ -8,19 +8,21 @@ import {
 import { Save, Add, Delete, ArrowBack } from '@mui/icons-material';
 
 import PokemonSelect from './PokemonSelect';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import ResponsiveIconButton from './ResponsiveButton';
 import { blue } from '@mui/material/colors';
 import { PokemonContext } from '../context/PokemonContext';
 
 export default function CreateTournament({ initialTournament = null, onSave }) {
   const navigate = useNavigate();
+  const routeLocation = useLocation();
   const { pokemons: contextPokemons, loading: pokemonsLoading } = useContext(PokemonContext);
   // State variables
   const [name, setName] = useState('');
   const [date, setDate] = useState('');
   const [location, setLocation] = useState('');
   const [deck, setDeck] = useState(['', '']); // stores Pokemon IDs
+  const [deckList, setDeckList] = useState('');
   const [matches, setMatches] = useState([]);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'error' });
   const [loading, setLoading] = useState(false);
@@ -62,6 +64,7 @@ export default function CreateTournament({ initialTournament = null, onSave }) {
         };
       });
       setMatches(formattedMatches);
+      setDeckList(initialTournament.deckList || '');
       setIsLoaded(true);
     } else if (!initialTournament) {
       setDate(new Date().toISOString().split('T')[0]);
@@ -144,6 +147,7 @@ const checkForChanges = () => {
     if (name !== (initialTournament.name || '')) return true;
     if (date !== (initialTournament.date || '')) return true;
     if (location !== (initialTournament.location || '')) return true;
+    if (deckList !== (initialTournament.deckList || '')) return true;
 
     return false;
   };
@@ -153,7 +157,7 @@ const checkForChanges = () => {
 
     if (!checkForChanges()) {
       setSnackbar({ open: true, message: 'Torneo guardado exitosamente', severity: 'success' });
-      await onSave({ name, date, location, deckUsed: convertDeckToString(deck), matches: convertMatchesToApiFormat(matches) }, true);
+      await onSave({ name, date, location, deckUsed: convertDeckToString(deck), deckList, matches: convertMatchesToApiFormat(matches) }, true);
       return;
     }
 
@@ -181,7 +185,7 @@ const checkForChanges = () => {
     try {
       setLoading(true);
 
-      await onSave({ name, date, location, deckUsed, matches: formattedMatches });
+      await onSave({ name, date, location, deckUsed, deckList, matches: formattedMatches });
     } catch (error) {
       setSnackbar({ open: true, message: error.message || 'Error al guardar el torneo', severity: 'error' });
     } finally {
@@ -213,8 +217,12 @@ const checkForChanges = () => {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'nowrap', gap: 1, overflow: 'hidden' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
           <IconButton onClick={() => {
-            if (window.history.length > 1) {
-              navigate(-1);
+            const params = new URLSearchParams(routeLocation.search);
+            const editIdFromQuery = params.get('id');
+            if (routeLocation.pathname.startsWith('/edit/')) {
+              navigate(`/details/${routeLocation.pathname.split('/edit/')[1]}`);
+            } else if (routeLocation.pathname === '/new' && editIdFromQuery) {
+              navigate(`/details/${editIdFromQuery}`);
             } else {
               navigate('/');
             }
@@ -287,6 +295,17 @@ const checkForChanges = () => {
               />
             </Grid>
           </Grid>
+          <TextField
+            fullWidth
+            multiline
+            rows={4}
+            maxRows={12}
+            label="Decklist"
+            placeholder="Copia y pega aquí tu lista de cartas desde otra app..."
+            value={deckList}
+            onChange={(e) => setDeckList(e.target.value)}
+            sx={{ mt: 2.5, '& .MuiInputBase-root': { maxHeight: 200, overflow: 'auto' } }}
+          />
         </CardContent>
       </Card>
 

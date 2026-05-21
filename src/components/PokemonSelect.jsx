@@ -125,6 +125,12 @@ const PokemonSelect = ({ value, onChange, options, label, isMainDeck = false }) 
               onChange={(e) => setSearchTerm(e.target.value)}
               sx={{ mb: 2 }}
               autoFocus
+              autoComplete="off"
+              inputProps={{
+                autoCorrect: "off",
+                autoCapitalize: "off",
+                spellCheck: "false"
+              }}
             />
             <Box sx={{ maxHeight: '50vh', overflow: 'auto' }}>
               {searchTerm.length <= 2 ? (

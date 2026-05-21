@@ -16,6 +16,7 @@ import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import About from './pages/About';
+import Feedback from './pages/Feedback';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 import Refund from './pages/Refund';
@@ -91,6 +92,7 @@ function App() {
                       <Route path="/details/:id" element={<Details />} />
                       <Route path="/edit/:id" element={<EditTournament />} />
                       <Route path="/about" element={<About />} />
+                      <Route path="/feedback" element={<Feedback />} />
                       <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
                   </Layout>

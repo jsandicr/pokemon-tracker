@@ -7,12 +7,17 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Verificar si hay un usuario logueado en localStorage al iniciar
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
     setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    const onSessionExpired = () => logout();
+    window.addEventListener('auth:logout', onSessionExpired);
+    return () => window.removeEventListener('auth:logout', onSessionExpired);
   }, []);
 
   const login = (userData) => {

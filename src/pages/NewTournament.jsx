@@ -32,9 +32,10 @@ const NewTournament = () => {
         }));
         setInitialTournament({
           name: data.name || '',
-          date: data.date ? data.date.split('T')[0] : '', // ISO date to yyyy-mm-dd
+          date: data.date ? data.date.split('T')[0] : '',
           location: data.location || '',
           deckUsed: deck.join('/'),
+          deckList: data.deckList || '',
           matches: formattedMatches
         });
       } catch (error) {

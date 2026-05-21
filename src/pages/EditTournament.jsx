@@ -40,6 +40,7 @@ const processData = (data) => {
       date: dateStr,
       location: data.location,
       deckUsed: deckUsed,
+      deckList: data.deckList || '',
       matches: data.matches
     };
   };
@@ -78,6 +79,7 @@ const processData = (data) => {
         _id: id,
         date: updatedData.date || initialData.date,
         deckUsed: updatedData.deckUsed,
+        deckList: updatedData.deckList || '',
         matches: updatedData.matches,
         results: {
           wins: updatedData.matches?.filter(m => m.result === 'win').length || 0,

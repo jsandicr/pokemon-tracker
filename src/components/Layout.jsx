@@ -7,7 +7,7 @@ import {
 import {
   Home as HomeIcon, AddCircle as AddIcon, BarChart as StatsIcon,
   Menu as MenuIcon, LightMode, DarkMode,
-  Instagram as InstagramIcon
+  Instagram as InstagramIcon, MailOutline as FeedbackIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
@@ -108,6 +108,24 @@ const Layout = ({ children, toggleTheme, currentMode }) => {
               primaryTypographyProps={{
                 color: location.pathname === '/stats' ? 'primary.main' : 'inherit',
                 fontWeight: location.pathname === '/stats' ? 'bold' : 'normal'
+              }}
+            />
+          </ListItemButton>
+        </ListItem>
+        <ListItem disablePadding>
+          <ListItemButton
+            selected={location.pathname === '/feedback'}
+            onClick={() => handleNavigate('/feedback')}
+            sx={{ borderRadius: 2, mb: 1 }}
+          >
+            <ListItemIcon>
+              <FeedbackIcon color={location.pathname === '/feedback' ? 'primary' : 'inherit'} />
+            </ListItemIcon>
+            <ListItemText
+              primary="Feedback"
+              primaryTypographyProps={{
+                color: location.pathname === '/feedback' ? 'primary.main' : 'inherit',
+                fontWeight: location.pathname === '/feedback' ? 'bold' : 'normal'
               }}
             />
           </ListItemButton>
